@@ -1,20 +1,6 @@
----
-description: This set of templates demonstrates how to set up Azure AI Foundry with the basic setup, meaning with public internet access enabled, Microsoft-managed keys for encryption and Microsoft-managed identity configuration for the AI resource.
-page_type: sample
-products:
-- azure
-- azure-resource-manager
-urlFragment: aifoundry-basics
-languages:
-- bicep
-- json
----
 # Azure AI Foundry basic setup
 
-
-<!-- [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Faifoundry-basics%2Fazuredeploy.json) -->
-
-Deploy from https://github.com/doruit/global-ai-bootcamp-2025-workshop-ai-agents/blob/main/aifoundry-basics/azuredeploy.json
+Open your browser and go to the [Azure Portal](https://portal.azure.com). Logon with the credentials provided by your instructor.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdoruit%2Fglobal-ai-bootcamp-2025-workshop-ai-agents%2Frefs%2Fheads%2Fmain%2Faifoundry-basics%2Fazuredeploy.json)
 
