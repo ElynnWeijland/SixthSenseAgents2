@@ -11,7 +11,7 @@
   "parameters": {
     "aiHubName": {
       "type": "string",
-      "defaultValue": "demo",
+      "defaultValue": "aihubteamYOURNUMBER",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
@@ -20,14 +20,14 @@
     },
     "aiHubFriendlyName": {
       "type": "string",
-      "defaultValue": "Demo AI resource",
+      "defaultValue": "AI Hub team YOURNUMBER",
       "metadata": {
         "description": "Friendly name for your Azure AI resource"
       }
     },
     "aiHubDescription": {
       "type": "string",
-      "defaultValue": "This is an example AI resource for use in Azure AI Foundry.",
+      "defaultValue": "This AI Hub is used for the Knights of the Prompts hackathon.",
       "metadata": {
         "description": "Description of your Azure AI resource dispayed in AI Foundry"
       }
