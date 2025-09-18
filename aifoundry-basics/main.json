@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.32.4.45862",
-      "templateHash": "1162398388136629275"
+      "version": "0.26.54.24096",
+      "templateHash": "4799091695766402139"
     }
   },
   "parameters": {
     "aiHubName": {
       "type": "string",
-      "defaultValue": "demo",
+      "defaultValue": "air6-demo",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
@@ -90,8 +90,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.32.4.45862",
-              "templateHash": "16757053454291018404"
+              "version": "0.26.54.24096",
+              "templateHash": "18174080564083878511"
             }
           },
           "parameters": {
@@ -348,7 +348,7 @@
         "mode": "Incremental",
         "parameters": {
           "aiHubName": {
-            "value": "[format('aih-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+            "value": "[format('ai-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
           },
           "aiHubFriendlyName": {
             "value": "[parameters('aiHubFriendlyName')]"
@@ -387,8 +387,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.32.4.45862",
-              "templateHash": "439770507831038985"
+              "version": "0.26.54.24096",
+              "templateHash": "18319324019540569041"
             }
           },
           "parameters": {
@@ -468,11 +468,8 @@
               "properties": {
                 "category": "AzureOpenAI",
                 "target": "[parameters('aiServicesTarget')]",
-                "authType": "ApiKey",
+                "authType": "AAD",
                 "isSharedToAll": true,
-                "credentials": {
-                  "key": "[format('{0}', listKeys(parameters('aiServicesId'), '2021-10-01').key1)]"
-                },
                 "metadata": {
                   "ApiType": "Azure",
                   "ResourceId": "[parameters('aiServicesId')]"
