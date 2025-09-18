@@ -12,7 +12,7 @@ Azure AI Foundry is built on Azure Machine Learning as the primary resource prov
 
 An 'Azure AI hub' is a special kind of 'Azure Machine Learning workspace', that is kind = "hub".
 
-## Resources
+## Resources that will be deployed
 
 | Provider and type | Description |
 | - | - |

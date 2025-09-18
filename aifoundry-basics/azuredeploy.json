@@ -252,7 +252,7 @@
               "kind": "AIServices",
               "properties": {
                 "apiProperties": {
-                  "statisticsEnabled": false
+                  // "statisticsEnabled": false
                 }
               }
             },
