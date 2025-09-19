@@ -25,6 +25,9 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
   location: location
   tags: tags
   kind: 'project'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     friendlyName: aiProjectFriendlyName
     description: aiProjectDescription

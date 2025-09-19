@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "8711262136253891456"
+      "templateHash": "13482813198362301205"
     }
   },
   "parameters": {
@@ -550,7 +550,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "4838921212608538980"
+              "templateHash": "2714830352842125390"
             }
           },
           "parameters": {
@@ -602,6 +602,9 @@
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "kind": "project",
+              "identity": {
+                "type": "SystemAssigned"
+              },
               "properties": {
                 "friendlyName": "[parameters('aiProjectFriendlyName')]",
                 "description": "[parameters('aiProjectDescription')]",
