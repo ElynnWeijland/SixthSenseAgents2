@@ -10,7 +10,9 @@ Dive into the world of intelligent conversational agents with Azure AI Agent Ser
 🕒 75 - 90 minutes
 
 ## 💡 The Use Case for This Lab
-![📊](media/image-2.png){: height="250px" align="right" style="padding: 10px;" }
+<div style="float: right; padding: 10px;">
+    <img src="media/image-2.png" alt="📊" height="150px">
+</div>
 Imagine you are a sales manager at Contoso, a multinational retail company that sells outdoor equipment. 🏕️ You need to analyze sales data to find trends, understand customer preferences, and make informed business decisions. To help you, Contoso has developed a conversational agent that can answer questions about your sales data. 💬📈
 
 ## 🎯 What You Will Learn
