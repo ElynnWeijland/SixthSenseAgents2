@@ -18,6 +18,9 @@ param location string = resourceGroup().location
 @description('Set of tags to apply to all resources.')
 param tags object = {}
 
+@description('Project description')
+param aiProjectDescription string = 'Project for experiments'
+
 // Variables
 var name = toLower('${aiHubName}')
 
@@ -55,5 +58,16 @@ module aiHub 'modules/ai-hub.bicep' = {
     containerRegistryId: aiDependencies.outputs.containerRegistryId
     keyVaultId: aiDependencies.outputs.keyvaultId
     storageAccountId: aiDependencies.outputs.storageId
+  }
+}
+
+module aiProject 'modules/ai-project.bicep' = {
+  name: 'project-${name}-${uniqueSuffix}-deployment'
+  params: {
+    location: location
+    tags: tags
+    aiProjectName: 'prj-${name}-${uniqueSuffix}'
+    aiProjectDescription: aiProjectDescription
+    hubId: aiHub.outputs.aiHubID
   }
 }

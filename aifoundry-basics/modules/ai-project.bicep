@@ -30,7 +30,7 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
     description: aiProjectDescription
 
     // Try hubId first; if validation fails, swap to 'hub'
-    hubId: hubId
+    hubResourceId: hubId
     // hub: hubId
   }
 }
