@@ -159,9 +159,9 @@ Start asking questions about Contoso sales data. For example:
 
         1. The LLM generates an SQL query to answer the user's question. For the question **"What are the sales by region?"**, the following SQL query is generated:
 
-            ```
-            SELECT region, SUM(revenue) AS total_revenue FROM sales_data GROUP BY region;
-            ```
+```
+SELECT region, SUM(revenue) AS total_revenue FROM sales_data GROUP BY region;
+```
 
         1. The LLM then asks the agent app to call the **async_fetch_sales_data_using_sqlite_query** function, which retrieves the required data from the SQLite database and returns it to the LLM.
         2. Using the retrieved data, the LLM generates a table in Markdown format and returns it to the user. If you check the instructions file, you'll notice that the default output format is Markdown.
