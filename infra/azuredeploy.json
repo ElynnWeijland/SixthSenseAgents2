@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "14619958889513097417"
+      "templateHash": "3043855088022672557"
     }
   },
   "parameters": {
@@ -643,9 +643,6 @@
           "modelName": {
             "value": "gpt-4.1"
           },
-          "modelVersion": {
-            "value": "latest"
-          },
           "capacity": {
             "value": 30
           }
@@ -657,7 +654,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "2950687082233532970"
+              "templateHash": "9323055872451837017"
             }
           },
           "parameters": {
@@ -681,12 +678,6 @@
                 "description": "Model name."
               }
             },
-            "modelVersion": {
-              "type": "string",
-              "metadata": {
-                "description": "Model version (do NOT use latest unless docs explicitly allow)."
-              }
-            },
             "capacity": {
               "type": "int",
               "defaultValue": 30,
@@ -708,8 +699,7 @@
               "properties": {
                 "model": {
                   "name": "[parameters('modelName')]",
-                  "format": "OpenAI",
-                  "version": "[parameters('modelVersion')]"
+                  "format": "OpenAI"
                 }
               }
             }

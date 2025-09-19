@@ -7,9 +7,6 @@ param deploymentName string = 'gpt41'
 @description('Model name.')
 param modelName string = 'gpt-4.1'
 
-@description('Model version (do NOT use latest unless docs explicitly allow).')
-param modelVersion string
-
 @minValue(1)
 param capacity int = 30
 
@@ -30,7 +27,6 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-
     model: {
       name: modelName
       format: 'OpenAI'
-      version: modelVersion
     }
     // Optional: versionUpgradeOption: 'OnceCurrentVersionExpired' | 'NoAutoUpgrade'
     // Optional: raiPolicyName: 'Microsoft.Default'
