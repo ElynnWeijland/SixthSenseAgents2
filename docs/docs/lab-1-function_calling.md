@@ -1,3 +1,4 @@
+![alt text](../../media/image-function-calling.png)
 ## Introduction
 
 ### What is Function Calling
@@ -195,3 +196,6 @@ When you're done, type **exit**, or press <kbd>Shift</kbd>+<kbd>F5</kbd> to stop
 ### Disable the Breakpoint
 
 Remember to disable the breakpoint before running the app again.
+
+## Next Lab
+Proceed to the next lab: [Lab 2 - Code Interpreter](lab-2-code_interpreter.md)

@@ -1,8 +1,13 @@
 # Azure AI Foundry basic setup
 
+This folder contains all the deployment templates and scripts needed to set up a basic Azure AI Foundry environment. For the Knights of the Prompts workshop, we will use a simplified configuration of Azure AI Foundry, which is suitable for learning and experimentation purposes. 
+
+> **IMPORTANT**  
+> Before using this setup, please check with your instructor if environments need to be deployed as part of the workshop. For the Knights of the Prompts hackathon, all the team environments will be deployed by the instructor.
+
 Open your browser and go to the [Azure Portal](https://portal.azure.com). Logon with the credentials provided by your instructor.
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdoruit%2Fglobal-ai-bootcamp-2025-workshop-ai-agents%2Frefs%2Fheads%2Fmain%2Finfra%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fdoruit%2FKnights-Of-The-Prompts-Agent-Workshop%2Frefs%2Fheads%2Fmain%2Finfra%2Fazuredeploy.json)
 
 
 This set of templates demonstrates how to set up Azure AI Foundry with a basic configuration, meaning with public internet access enabled, Microsoft-managed keys for encryption and _Microsoft_-managed identity configuration for the AI hub resource.

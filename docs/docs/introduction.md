@@ -1,6 +1,4 @@
-# Build an agent with Azure AI Agent Service
-
-Imagine you are a sales manager at Contoso, a multinational retail company that sells outdoor equipment. You need to analyze sales data to find trends, understand customer preferences, and make informed business decisions. To help you, Contoso has developed a conversational agent that can answer questions about your sales data.
+![alt text](../../media/image-introduction.png)
 
 
 ## What is an LLM-Powered AI Agent
@@ -32,3 +30,6 @@ Learn more about the Azure AI Agent Service in the [Azure AI Agent Service docum
 ## AI Agent Frameworks
 
 Popular agent frameworks include LangChain, Semantic Kernel, and CrewAI. What distinguishes the Azure AI Agent Service is its seamless integration capabilities and an SDK optimized for rapid deployment. In complex multi-agent scenarios, solutions will combine SDKs like Semantic Kernel and AutoGen with the Azure AI Agent Service to build robust and scalable systems.
+
+## Next Lab
+Proceed to the next lab: [Lab 2 - Code Interpreter](lab-1-function_calling.md)

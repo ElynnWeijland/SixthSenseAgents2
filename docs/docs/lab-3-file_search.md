@@ -1,3 +1,4 @@
+![alt text](../../media/image-filesearch.png)
 ## Introduction
 
 Grounding a conversation with documents is highly effective, especially for retrieving product details that may not be available in an operational database. The Azure AI Agent Service includes a [File Search tool](https://learn.microsoft.com/en-us/azure/ai-services/agents/how-to/tools/file-search){:target="_blank"}, which enables agents to retrieve information directly from uploaded files, such as user-supplied documents or product data, enabling a [RAG-style](https://en.wikipedia.org/wiki/Retrieval-augmented_generation){:target="_blank"} search experience.

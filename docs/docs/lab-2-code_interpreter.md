@@ -1,3 +1,5 @@
+![alt text](../../media/image-code-interpreter.png)
+
 ## Introduction
 
 The Azure AI Agent Service Code Interpreter enables the LLM to generate Python code for tasks such as creating charts or performing complex data analyses based on user queries. It leverages natural language processing (NLP), sales data from an SQLite database, and user prompts to automate code generation. The LLM-generated Python code executes within a secure sandbox environment, utilizing a restricted subset of Python to ensure safe and controlled execution.
@@ -97,3 +99,6 @@ Try these questions:
 ## Stop the Agent App
 
 When you're done, type **exit**, or press <kbd>Shift</kbd>+<kbd>F5</kbd> to stop the agent app.
+
+## Next Lab
+Proceed to the next lab: [Lab 2 - Code Interpreter](lab-3-file_search.md)
