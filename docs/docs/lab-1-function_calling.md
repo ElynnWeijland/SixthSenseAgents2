@@ -87,10 +87,10 @@ Open the **instructions/instructions_function_calling.txt** file and review the 
 !!! info
     The {database_schema_string} placeholder in the instructions is replaced with the actual database schema when the app initializes.
 
-    ```python
-    # Replace the placeholder with the database schema string
-    instructions = instructions.replace("{database_schema_string}", database_schema_string)
-    ```
+```python
+# Replace the placeholder with the database schema string
+instructions = instructions.replace("{database_schema_string}", database_schema_string)
+```
 
 <!-- ### Review the Function Logic
 
