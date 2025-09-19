@@ -48,7 +48,7 @@ Select **Open in GitHub Codespaces** to open the project in GitHub Codespaces.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/doruit/Knights-Of-The-Prompts-Agent-Workshop)
 
-!!! WARNING "It will take several minutes to build the Codespace so carry on reading the instructions while it builds."
+> WARNING "It will take several minutes to build the Codespace so carry on reading the instructions while it builds."
 
 ## Lab Structure
 
@@ -81,12 +81,12 @@ You need to authenticate with Azure so the agent app can access the Azure AI Age
 az login --use-device-code
 ```
 
-    !!! NOTE
-        You'll be prompted to open a browser link and log in to your Azure account.
+> NOTE
+> You'll be prompted to open a browser link and log in to your Azure account.
 
-        1. A browser window will open automatically, select your account type and click **Next**.
-        2. Sign in with your Azure subscription **Username** and **Password**.
-        3. Select **OK**, then **Done**.
+> 1. A browser window will open automatically, select your account type and click **Next**.
+> 2. Sign in with your Azure subscription **Username** and **Password**.
+> 3. Select **OK**, then **Done**.
 
 3. Then select the appropriate subscription from the command line.
 4. Leave the terminal window open for the next steps.
