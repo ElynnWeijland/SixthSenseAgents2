@@ -1,4 +1,5 @@
-# Azure AI Foundry basic setup
+![alt text](../media/image-infra.png)
+## Azure AI Foundry basic setup
 
 This folder contains all the deployment templates and scripts needed to set up a basic Azure AI Foundry environment. For the Knights of the Prompts workshop, we will use a simplified configuration of Azure AI Foundry, which is suitable for learning and experimentation purposes. 
 

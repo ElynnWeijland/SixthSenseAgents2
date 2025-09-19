@@ -43,9 +43,8 @@ In this lab, you'll enable the function logic to execute dynamic SQL queries aga
     # INSTRUCTIONS_FILE = "instructions/instructions_function_calling.txt"
     # toolset.add(functions)
     ```
-
-    !!! WARNING
-        The lines to be uncommented are not adjacent. When removing the # character, ensure you also delete the space that follows it.
+> WARNING
+> The lines to be uncommented are not adjacent. When removing the # character, ensure you also delete the space that follows it.
 
 1. Review the Code in main.py.
 
@@ -82,10 +81,11 @@ In this lab, you'll enable the function logic to execute dynamic SQL queries aga
 
 Open the **instructions/instructions_function_calling.txt** file and review the **Tools** section for details on the function-calling instructions.
 
-!!! tip "In VS Code, press Alt + Z (Windows/Linux) or Option + Z (Mac) to enable word wrap mode, making the instructions easier to read."
+> TIP 
+> "In VS Code, press Alt + Z (Windows/Linux) or Option + Z (Mac) to enable word wrap mode, making the instructions easier to read."
 
-!!! info
-    The {database_schema_string} placeholder in the instructions is replaced with the actual database schema when the app initializes.
+> INFO
+> The {database_schema_string} placeholder in the instructions is replaced with the actual database schema when the app initializes.
 
 ```python
 # Replace the placeholder with the database schema string
@@ -133,9 +133,9 @@ Start asking questions about Contoso sales data. For example:
 
     *Feel free to ask any specific questions related to Contoso sales data!*
 
-    !!! tip
-        The LLM will provide a list of starter questions that were defined in the instructions file.
-        Try asking help in your language, for example `help in Hindi` or `help in Italian`.
+> TIP
+> The LLM will provide a list of starter questions that were defined in the instructions file.
+> Try asking help in your language, for example `help in Hindi` or `help in Italian`.
 
 2. **What are the sales by region?**
 
@@ -151,20 +151,21 @@ Start asking questions about Contoso sales data. For example:
         | MIDDLE EAST    | $5,312,519     |
         | NORTH AMERICA  | $15,986,462    |
 
-    !!! info
+> INFO
 
-        So, what’s happening behind the scenes to make it all work?
+> So, what’s happening behind the scenes to make it all work?
 
-        The LLM orchestrates the following steps:
+> The LLM orchestrates the following steps:
 
-        1. The LLM generates an SQL query to answer the user's question. For the question **"What are the sales by region?"**, the following SQL query is generated:
+> A. The LLM generates an SQL query to answer the user's question. For the question **"What are the sales by region?"**, the following SQL query is generated:
 
 ```
 SELECT region, SUM(revenue) AS total_revenue FROM sales_data GROUP BY region;
 ```
 
-        1. The LLM then asks the agent app to call the **async_fetch_sales_data_using_sqlite_query** function, which retrieves the required data from the SQLite database and returns it to the LLM.
-        2. Using the retrieved data, the LLM generates a table in Markdown format and returns it to the user. If you check the instructions file, you'll notice that the default output format is Markdown.
+> B. The LLM then asks the agent app to call the **async_fetch_sales_data_using_sqlite_query** function, which retrieves the required data from the SQLite database and returns it to the LLM.
+
+> C. Using the retrieved data, the LLM generates a table in Markdown format and returns it to the user. If you check the instructions file, you'll notice that the default output format is Markdown.
 
 3. **Show the 3 most recent transactions**
 
