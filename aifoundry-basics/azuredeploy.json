@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.32.4.45862",
-      "templateHash": "1162398388136629275"
+      "version": "0.37.4.10188",
+      "templateHash": "8711262136253891456"
     }
   },
   "parameters": {
     "aiHubName": {
       "type": "string",
-      "defaultValue": "aihubteamYOURNUMBER",
+      "defaultValue": "demo",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
@@ -20,16 +20,16 @@
     },
     "aiHubFriendlyName": {
       "type": "string",
-      "defaultValue": "AI Hub team YOURNUMBER",
+      "defaultValue": "Demo AI resource",
       "metadata": {
         "description": "Friendly name for your Azure AI resource"
       }
     },
     "aiHubDescription": {
       "type": "string",
-      "defaultValue": "This AI Hub is used for the Knights of the Prompts hackathon.",
+      "defaultValue": "This is an example AI resource for use in Azure AI Foundry.",
       "metadata": {
-        "description": "Description of your Azure AI resource dispayed in AI Foundry"
+        "description": "Description of your Azure AI resource displayed in AI Foundry"
       }
     },
     "location": {
@@ -44,6 +44,13 @@
       "defaultValue": {},
       "metadata": {
         "description": "Set of tags to apply to all resources."
+      }
+    },
+    "aiProjectDescription": {
+      "type": "string",
+      "defaultValue": "Knights of the Prompts",
+      "metadata": {
+        "description": "Project description"
       }
     }
   },
@@ -90,8 +97,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.32.4.45862",
-              "templateHash": "16757053454291018404"
+              "version": "0.37.4.10188",
+              "templateHash": "13735081095571202736"
             }
           },
           "parameters": {
@@ -250,11 +257,7 @@
                 "name": "S0"
               },
               "kind": "AIServices",
-              "properties": {
-                "apiProperties": {
-                  // "statisticsEnabled": false
-                }
-              }
+              "properties": {}
             },
             {
               "type": "Microsoft.Storage/storageAccounts",
@@ -387,8 +390,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.32.4.45862",
-              "templateHash": "439770507831038985"
+              "version": "0.37.4.10188",
+              "templateHash": "17284325707953150715"
             }
           },
           "parameters": {
@@ -512,6 +515,110 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('project-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "aiProjectName": {
+            "value": "[format('prj-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+          },
+          "aiProjectDescription": {
+            "value": "[parameters('aiProjectDescription')]"
+          },
+          "hubId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiHubID.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "4838921212608538980"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region of the deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags to add to the resources"
+              }
+            },
+            "aiProjectName": {
+              "type": "string",
+              "metadata": {
+                "description": "Project workspace name"
+              }
+            },
+            "aiProjectFriendlyName": {
+              "type": "string",
+              "defaultValue": "[parameters('aiProjectName')]",
+              "metadata": {
+                "description": "Project display name"
+              }
+            },
+            "aiProjectDescription": {
+              "type": "string",
+              "defaultValue": "Sample project",
+              "metadata": {
+                "description": "Project description"
+              }
+            },
+            "hubId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the hub (kind=hub) workspace"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.MachineLearningServices/workspaces",
+              "apiVersion": "2023-08-01-preview",
+              "name": "[parameters('aiProjectName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "project",
+              "properties": {
+                "friendlyName": "[parameters('aiProjectFriendlyName')]",
+                "description": "[parameters('aiProjectDescription')]",
+                "hubResourceId": "[parameters('hubId')]"
+              }
+            }
+          ],
+          "outputs": {
+            "aiProjectId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
       ]
     }
   ]

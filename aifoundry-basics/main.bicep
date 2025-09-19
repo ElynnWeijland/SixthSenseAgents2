@@ -19,7 +19,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 @description('Project description')
-param aiProjectDescription string = 'Knights of the Prompts team guid: ${uniqueSuffix}'
+param aiProjectDescription string = 'Knights of the Prompts'
 
 // Variables
 var name = toLower('${aiHubName}')
