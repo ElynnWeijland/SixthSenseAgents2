@@ -103,4 +103,4 @@ PROJECT_CONNECTION_STRING="<your_project_connection_string>"
 Now your codespace is ready, let's move to the next step!
 
 ## Next 
-Proceed to the next lab: [Lab 1: Function Calling](lab-1-function_calling.md)
+Proceed to the first lab: [Lab 1: Function Calling](lab-1-function_calling.md)
