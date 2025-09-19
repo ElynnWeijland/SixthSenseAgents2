@@ -71,3 +71,14 @@ module aiProject 'modules/ai-project.bicep' = {
     hubId: aiHub.outputs.aiHubID
   }
 }
+
+module gpt41Deployment 'modules/aoai-model-deployment.bicep' = {
+  name: 'gpt41-${name}-${uniqueSuffix}-deployment'
+  params: {
+    openAIAccountId: aiDependencies.outputs.aiservicesID
+    deploymentName: 'gpt41'
+    modelName: 'gpt-4.1'
+    modelVersion: 'latest'
+    capacity: 30
+  }
+}
