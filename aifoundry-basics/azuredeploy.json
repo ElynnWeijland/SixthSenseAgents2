@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "13482813198362301205"
+      "templateHash": "11853590641243127120"
     }
   },
   "parameters": {
@@ -622,6 +622,123 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('gpt41-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "openAIAccountId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiservicesID.value]"
+          },
+          "deploymentName": {
+            "value": "gpt41"
+          },
+          "modelName": {
+            "value": "gpt-4.1"
+          },
+          "modelVersion": {
+            "value": "latest"
+          },
+          "capacity": {
+            "value": 30
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "15316973256896328191"
+            }
+          },
+          "parameters": {
+            "openAIAccountId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Azure OpenAI account (Microsoft.CognitiveServices/accounts with kind OpenAI)."
+              }
+            },
+            "deploymentName": {
+              "type": "string",
+              "defaultValue": "gpt41",
+              "metadata": {
+                "description": "Deployment name (no spaces)."
+              }
+            },
+            "modelName": {
+              "type": "string",
+              "defaultValue": "gpt-4.1",
+              "metadata": {
+                "description": "Model name (e.g. gpt-4.1, gpt-4.1-mini, gpt-4o, etc.)"
+              }
+            },
+            "modelVersion": {
+              "type": "string",
+              "defaultValue": "latest",
+              "metadata": {
+                "description": "Model version or `latest` if supported in your region."
+              }
+            },
+            "capacity": {
+              "type": "int",
+              "defaultValue": 30,
+              "minValue": 1,
+              "metadata": {
+                "description": "Throughput / capacity units (depends on quota & model)."
+              }
+            }
+          },
+          "variables": {
+            "openAIAccountName": "[last(split(parameters('openAIAccountId'), '/'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.CognitiveServices/accounts/deployments",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', variables('openAIAccountName'), parameters('deploymentName'))]",
+              "sku": {
+                "name": "Standard",
+                "capacity": "[parameters('capacity')]"
+              },
+              "properties": {
+                "model": {
+                  "format": "OpenAI",
+                  "name": "[parameters('modelName')]",
+                  "version": "[parameters('modelVersion')]"
+                },
+                "scaleSettings": {
+                  "capacity": "[parameters('capacity')]"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "deploymentName": {
+              "type": "string",
+              "value": "[parameters('deploymentName')]"
+            },
+            "modelNameOut": {
+              "type": "string",
+              "value": "[parameters('modelName')]"
+            },
+            "endpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('openAIAccountName')), '2023-05-01').endpoint]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
       ]
     }
   ]
