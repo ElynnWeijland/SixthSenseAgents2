@@ -9,7 +9,7 @@ param aiHubName string = 'demo'
 @description('Friendly name for your Azure AI resource')
 param aiHubFriendlyName string = 'Demo AI resource'
 
-@description('Description of your Azure AI resource dispayed in AI Foundry')
+@description('Description of your Azure AI resource displayed in AI Foundry')
 param aiHubDescription string = 'This is an example AI resource for use in Azure AI Foundry.'
 
 @description('Azure region used for the deployment of all resources.')
@@ -19,7 +19,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 @description('Project description')
-param aiProjectDescription string = 'Project for experiments'
+param aiProjectDescription string = 'Knights of the Prompts team guid: ${uniqueSuffix}'
 
 // Variables
 var name = toLower('${aiHubName}')
