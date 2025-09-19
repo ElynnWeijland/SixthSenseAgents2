@@ -103,9 +103,6 @@ param storageName string
   'Standard_LRS'
   'Standard_ZRS'
   'Standard_GRS'
-  'Standard_GZRS'
-  'Standard_RAGRS'
-  'Standard_RAGZRS'
   'Premium_LRS'
   'Premium_ZRS'
 ])
@@ -176,7 +173,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
-output aiservicesID string = aiServices.id
+output aiservicesId string = aiServices.id
 output aiservicesTarget string = aiServices.properties.endpoint
 output storageId string = storage.id
 output keyvaultId string = keyVault.id

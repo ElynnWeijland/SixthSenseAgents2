@@ -52,7 +52,7 @@ module aiHub 'modules/ai-hub.bicep' = {
     tags: tags
 
     // dependent resources
-    aiServicesId: aiDependencies.outputs.aiservicesID
+    aiServicesId: aiDependencies.outputs.aiservicesId
     aiServicesTarget: aiDependencies.outputs.aiservicesTarget
     applicationInsightsId: aiDependencies.outputs.applicationInsightsId
     containerRegistryId: aiDependencies.outputs.containerRegistryId
@@ -75,7 +75,7 @@ module aiProject 'modules/ai-project.bicep' = {
 module gpt41Deployment 'modules/aoai-model-deployment.bicep' = {
   name: 'gpt41-${name}-${uniqueSuffix}-deployment'
   params: {
-    openAIAccountId: aiDependencies.outputs.aiservicesID
+    openAIAccountId: aiDependencies.outputs.aiservicesId
     deploymentName: 'gpt41'
     modelName: 'gpt-4.1'
     capacity: 30
