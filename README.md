@@ -24,5 +24,5 @@ By the end of this workshop, you will:
 
 ## 📖 Workshop Instructions
 
-👉 Start the full workshop here: [Introduction](docs/docs/getting-started.md)
+👉 Start the full workshop here: [Getting Started](docs/docs/getting-started.md)
 
