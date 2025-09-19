@@ -1,46 +1,39 @@
-@description('Resource ID of the Azure OpenAI account (Microsoft.CognitiveServices/accounts with kind OpenAI).')
+@description('Resource ID of an Azure OpenAI account (kind=OpenAI).')
 param openAIAccountId string
 
-@description('Deployment name (no spaces).')
+@description('Deployment name.')
 param deploymentName string = 'gpt41'
 
-@description('Model name (e.g. gpt-4.1, gpt-4.1-mini, gpt-4o, etc.)')
+@description('Model name.')
 param modelName string = 'gpt-4.1'
 
-@description('Model version or `latest` if supported in your region.')
-param modelVersion string = 'latest'
+@description('Model version (do NOT use latest unless docs explicitly allow).')
+param modelVersion string
 
-@description('Throughput / capacity units (depends on quota & model).')
 @minValue(1)
 param capacity int = 30
 
-// Derive account name from full resource ID
 var openAIAccountName = last(split(openAIAccountId, '/'))
 
-// Reference existing Azure OpenAI account
 resource openAI 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
   name: openAIAccountName
 }
 
-// Model deployment
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: openAI
   name: deploymentName
+  parent: openAI
   sku: {
-    name: 'Standard'
+    name: 'GlobalStandard'
     capacity: capacity
   }
   properties: {
     model: {
-      format: 'OpenAI'
       name: modelName
+      format: 'OpenAI'
       version: modelVersion
     }
-    scaleSettings: {
-      capacity: capacity
-    }
-    // Uncomment if you must specify a RAI policy that exists in the account
-    // raiPolicyName: 'Microsoft.Default'
+    // Optional: versionUpgradeOption: 'OnceCurrentVersionExpired' | 'NoAutoUpgrade'
+    // Optional: raiPolicyName: 'Microsoft.Default'
   }
 }
 

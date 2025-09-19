@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "11853590641243127120"
+      "templateHash": "14619958889513097417"
     }
   },
   "parameters": {
@@ -657,44 +657,40 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "15316973256896328191"
+              "templateHash": "2950687082233532970"
             }
           },
           "parameters": {
             "openAIAccountId": {
               "type": "string",
               "metadata": {
-                "description": "Resource ID of the Azure OpenAI account (Microsoft.CognitiveServices/accounts with kind OpenAI)."
+                "description": "Resource ID of an Azure OpenAI account (kind=OpenAI)."
               }
             },
             "deploymentName": {
               "type": "string",
               "defaultValue": "gpt41",
               "metadata": {
-                "description": "Deployment name (no spaces)."
+                "description": "Deployment name."
               }
             },
             "modelName": {
               "type": "string",
               "defaultValue": "gpt-4.1",
               "metadata": {
-                "description": "Model name (e.g. gpt-4.1, gpt-4.1-mini, gpt-4o, etc.)"
+                "description": "Model name."
               }
             },
             "modelVersion": {
               "type": "string",
-              "defaultValue": "latest",
               "metadata": {
-                "description": "Model version or `latest` if supported in your region."
+                "description": "Model version (do NOT use latest unless docs explicitly allow)."
               }
             },
             "capacity": {
               "type": "int",
               "defaultValue": 30,
-              "minValue": 1,
-              "metadata": {
-                "description": "Throughput / capacity units (depends on quota & model)."
-              }
+              "minValue": 1
             }
           },
           "variables": {
@@ -706,17 +702,14 @@
               "apiVersion": "2023-05-01",
               "name": "[format('{0}/{1}', variables('openAIAccountName'), parameters('deploymentName'))]",
               "sku": {
-                "name": "Standard",
+                "name": "GlobalStandard",
                 "capacity": "[parameters('capacity')]"
               },
               "properties": {
                 "model": {
-                  "format": "OpenAI",
                   "name": "[parameters('modelName')]",
+                  "format": "OpenAI",
                   "version": "[parameters('modelVersion')]"
-                },
-                "scaleSettings": {
-                  "capacity": "[parameters('capacity')]"
                 }
               }
             }
