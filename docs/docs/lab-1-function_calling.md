@@ -152,7 +152,6 @@ Start asking questions about Contoso sales data. For example:
         | NORTH AMERICA  | $15,986,462    |
 
 > INFO
-
 > So, what’s happening behind the scenes to make it all work?
 > The LLM orchestrates the following steps:
 > A. The LLM generates an SQL query to answer the user's question. For the question **"What are the sales by region?"**, the following SQL query is generated:
