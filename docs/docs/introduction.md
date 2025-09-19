@@ -2,7 +2,6 @@
 
 
 ## What is an LLM-Powered AI Agent
-
 An AI Agent is semi-autonomous software designed to achieve a given goal without requiring predefined steps or processes. Instead of following explicitly programmed instructions, the agent determines how to accomplish the task dynamically.
 
 For example, if a user asks, "**Show the total sales by region as a pie chart**", the app doesn't rely on predefined logic for this specific request. Instead, a Large Language Model (LLM) interprets the request, manages the conversation flow and context, and orchestrates the necessary actions to produce the desired pie chart based on the regional sales data.
