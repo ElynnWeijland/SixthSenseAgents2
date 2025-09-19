@@ -1,4 +1,5 @@
-# Setup
+![alt text](../../media/image-getting-started.png)
+# Getting Started
 
 **Follow these steps to set up your environment and begin the workshop.**
 
@@ -23,14 +24,14 @@ We'll be using Microsoft tools and services, so there are a couple of quick setu
     - Android users: [Microsoft Authenticator on Google Play Store](https://play.google.com/store/apps/details?id=com.azure.authenticator)  
     - iPhone users: [Microsoft Authenticator on Apple App Store](https://apps.apple.com/app/microsoft-authenticator/id983156458)
 
-3. You need a GitHub account. If you do not have one, create it at [GitHub](https://github.com/join){:target="_blank"}.
+3. You need a GitHub account. If you do not have one, create it at [GitHub](https://github.com/join).
 
 ## Access to an Azure Subscription
 
 To run the lab you need to deploy some resources deployed in an Azure Subscription. For this there are multiple options.
 
 1. Use your own Azure Subscription
-2. Create a [free account](https://azure.microsoft.com/free/){:target="_blank"} before you begin.
+2. Create a [free account](https://azure.microsoft.com/free/) before you begin.
 3. Use an Azure Pass you received from your trainer.
 
 !!! note
@@ -46,7 +47,7 @@ The way to run this workshop is using GitHub Codespaces. This provides a pre-con
 
 Select **Open in GitHub Codespaces** to open the project in GitHub Codespaces.
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/GlobalAICommunity/global-ai-bootcamp-2025-workshop-ai-agents){:target="_blank"}
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/GlobalAICommunity/global-ai-bootcamp-2025-workshop-ai-agents)
 
 !!! Warning "It will take several minutes to build the Codespace so carry on reading the instructions while it builds."
 
@@ -77,11 +78,11 @@ You need to authenticate with Azure so the agent app can access the Azure AI Age
 1. In the Codespace, open a new terminal window by selecting **Terminal** > **New Terminal** from the **VS Code menu**.
 2. Run the following command to authenticate with Azure:
 
-    ```powershell
-    az login --use-device-code
-    ```
+```powershell
+az login --use-device-code
+```
 
-    !!! note
+    !!! NOTE
         You'll be prompted to open a browser link and log in to your Azure account.
 
         1. A browser window will open automatically, select your account type and click **Next**.
@@ -97,7 +98,7 @@ The following resources will be created in your Azure subscription:
 
 - An **Azure AI Foundry hub** named **agent-wksp**
 - An **Azure AI Foundry project** named **Agent Service Workshop** 
-- A **Serverless (pay-as-you-go) GPT-4o model deployment** named **gpt-4o (Global 2024-08-06)**. See pricing details [here](https://azure.microsoft.com/pricing/details/cognitive-services/openai-service/){:target="_blank"}.
+- A **Serverless (pay-as-you-go) GPT-4o model deployment** named **gpt-4o (Global 2024-08-06)**. See pricing details [here](https://azure.microsoft.com/pricing/details/cognitive-services/openai-service/).
 
 From the VS Code terminal run the following command:
 
@@ -112,7 +113,7 @@ The deploy script generates the **src/workshop/.env** file, which contains the p
 Your **.env** file should look similar to this but with your project connection string.
 
 ```python
-MODEL_DEPLOYMENT_NAME="gpt-4o"
+MODEL_DEPLOYMENT_NAME="gpt41"
 PROJECT_CONNECTION_STRING="<your_project_connection_string>"
 ```
 
@@ -121,3 +122,6 @@ PROJECT_CONNECTION_STRING="<your_project_connection_string>"
     If you are sharing the Azure pass resources and you just deployed the Azure resources in the previous steps? This is the time to share the contents of the **.env** file with your fellow workshop participants. 🙏
 
     When the contents of the **.env** file is shared with you, it is as easy as manually creating a **.env** file in the **src/workshop** folder. There is already a **.env.sample** file there to hint towards the correct location. Create the new file and paste in the contents (MODEL_DEPLOYMENT_NAME & PROJECT_CONNECTION_STRING) that was shared with you and save the file. Make sure the entire filename is **.env**.
+
+## Next 
+Proceed to the next lab: [Introduction](introduction.md)
