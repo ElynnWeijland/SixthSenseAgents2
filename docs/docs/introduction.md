@@ -11,7 +11,7 @@ Unlike traditional applications, where developers define the logic and workflows
 
 ## What is the Azure AI Agent Service
 
-The Azure AI Agent Service is now in public preview, offering a fully managed cloud service with SDKs for [Python](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-python-azure){:target="_blank"} and [C#](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-csharp){:target="_blank"}. It simplifies AI agent development, reducing complex tasks like function calling to just a few lines of code.
+The Azure AI Agent Service is now in public preview, offering a fully managed cloud service with SDKs for [Python](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-python-azure) and [C#](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-csharp). It simplifies AI agent development, reducing complex tasks like function calling to just a few lines of code.
 
 !!! info "Function calling allows you to connect LLMs to external tools and systems. This is useful for many things such as empowering AI agents with capabilities, or building deep integrations between your applications and LLMs."
 
@@ -25,7 +25,7 @@ The Azure AI Agent Service offers several advantages over traditional agent plat
 - **Conversation State Management**: Maintains context across multiple interactions.
 - **AI Model Compatibility**: Works with various AI models.
 
-Learn more about the Azure AI Agent Service in the [Azure AI Agent Service documentation](https://learn.microsoft.com/azure/ai-services/agents/overview){:target="_blank"}. In particular, read about the [components of agents](https://learn.microsoft.com/azure/ai-services/agents/concepts/agents#agents-components){:target="_blank"}.
+Learn more about the Azure AI Agent Service in the [Azure AI Agent Service documentation](https://learn.microsoft.com/azure/ai-services/agents/overview). In particular, read about the [components of agents](https://learn.microsoft.com/azure/ai-services/agents/concepts/agents#agents-components).
 
 ## AI Agent Frameworks
 

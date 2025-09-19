@@ -1,13 +1,13 @@
 ![alt text](../../media/image-filesearch.png)
 ## Introduction
 
-Grounding a conversation with documents is highly effective, especially for retrieving product details that may not be available in an operational database. The Azure AI Agent Service includes a [File Search tool](https://learn.microsoft.com/en-us/azure/ai-services/agents/how-to/tools/file-search){:target="_blank"}, which enables agents to retrieve information directly from uploaded files, such as user-supplied documents or product data, enabling a [RAG-style](https://en.wikipedia.org/wiki/Retrieval-augmented_generation){:target="_blank"} search experience.
+Grounding a conversation with documents is highly effective, especially for retrieving product details that may not be available in an operational database. The Azure AI Agent Service includes a [File Search tool](https://learn.microsoft.com/en-us/azure/ai-services/agents/how-to/tools/file-search), which enables agents to retrieve information directly from uploaded files, such as user-supplied documents or product data, enabling a [RAG-style](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) search experience.
 
 In this lab, you'll learn how to enable the document search and upload the Tents Data Sheet to a vector store for the agent. Once activated, the tool allows the agent to search the file and deliver relevant responses. Documents can be uploaded to the agent for all users or linked to a specific user thread, or linked to the Code Interpreter.
 
 When the app starts, a vector store is created, the Contoso tents datasheet is added, and it is made available to the agent. Normally, you wouldn’t create a new vector store and upload documents each time the app starts. Instead, you’d create the vector store once, upload potentially thousands of documents, and connect the store to the agent. For this lab, we recreate the vector store on each startup to demonstrate the process.
 
-A [vector store](https://en.wikipedia.org/wiki/Vector_database){:target="_blank"} is a database optimized for storing and searching vectors (numeric representations of text data). The File Search tool uses the vector store for [semantic search](https://en.wikipedia.org/wiki/Semantic_search){:target="_blank"} to search for relevant information in the uploaded document.
+A [vector store](https://en.wikipedia.org/wiki/Vector_database) is a database optimized for storing and searching vectors (numeric representations of text data). The File Search tool uses the vector store for [semantic search](https://en.wikipedia.org/wiki/Semantic_search) to search for relevant information in the uploaded document.
 
 ## Lab Exercise
 
@@ -29,7 +29,7 @@ A [vector store](https://en.wikipedia.org/wiki/Vector_database){:target="_blank"
     # toolset.add(file_search_tool)
     ```
 
-    !!! warning
+    !!! WARNING
         The lines to be uncommented are not adjacent. When removing the # character, ensure you also delete the space that follows it.
 
 5. Review the code in the `main.py` file.
@@ -81,7 +81,7 @@ The following conversation uses data from both the Contoso sales database and th
 
     The agent responds with a list of tent brands from the Tents Data Sheet.
 
-    !!! note
+    !!! INFO
         In the first lab, you may have noticed that the transaction history did not include tent brands or descriptions. This is because the underlying database schema does not store brand or description data. However, if you check the tents data sheet, you’ll find that this information is included. The agent can now reference the data sheet to access details such as brand, description, product type, and category, and relate this data back to the Contoso sales database.
 
 2. **What product type and categories are these brands associated with?**
@@ -99,3 +99,6 @@ The following conversation uses data from both the Contoso sales database and th
 ## Stop the Agent App
 
 When you're done, type **exit**, or press <kbd>Shift</kbd>+<kbd>F5</kbd> to stop the agent app.
+
+## Next
+Proceed to the next step: [Summary and Next Steps](summary.md)

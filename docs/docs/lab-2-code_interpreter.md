@@ -68,7 +68,7 @@ Try these questions:
 
     Once the task is complete, the pie chart image will be saved in the **files** folder. Open the folder in VS Code and click on the image file to view it.
 
-    !!! info
+    !!! INFO
         This might feel like magic, so what’s happening behind the scenes to make it all work?
 
         The LLM orchestrates the following steps:
@@ -87,7 +87,7 @@ Try these questions:
 
     Once the task is complete, check the **files** folder to see the downloaded file.
 
-    !!! info
+    !!! INFO
         By default, the instructions specify that data downloads in CSV format. You can request other formats, such as JSON or Excel, by including the desired format in your query (e.g., ‘Download as JSON’).
 
 3. **Download as JSON**

@@ -9,7 +9,7 @@ In this workshop, the function logic is used to execute the LLM dynamically gene
 
 ### Enabling Function Calling
 
-If you’re familiar with [Azure OpenAI Function Calling](https://learn.microsoft.com/azure/ai-services/openai/how-to/function-calling){:target="_blank"}, it requires defining a function schema for the LLM. Azure AI Agent Service supports this approach and also offers a more flexible option.
+If you’re familiar with [Azure OpenAI Function Calling](https://learn.microsoft.com/azure/ai-services/openai/how-to/function-calling), it requires defining a function schema for the LLM. Azure AI Agent Service supports this approach and also offers a more flexible option.
 
 With the Azure AI Agent Service and its Python SDK, you can define the function schema directly within the Python function’s docstring. This approach keeps the definition and implementation together, simplifying maintenance and enhancing readability.
 
@@ -44,7 +44,7 @@ In this lab, you'll enable the function logic to execute dynamic SQL queries aga
     # toolset.add(functions)
     ```
 
-    !!! warning
+    !!! WARNING
         The lines to be uncommented are not adjacent. When removing the # character, ensure you also delete the space that follows it.
 
 1. Review the Code in main.py.
@@ -114,7 +114,7 @@ async def async_fetch_sales_data_using_sqlite_query(self: "SalesData", sqlite_qu
 1. Press <kbd>F5</kbd> to run the app.
 2. In the terminal, you'll see the app start, and the agent app will prompt you to enter your query.
 
-    ![Agent App](./media/run-the-agent.png){:width="600"}
+    ![Agent App](./media/run-the-agent.png)
 
 ### Start a Conversation with the Agent
 
@@ -176,9 +176,9 @@ Start asking questions about Contoso sales data. For example:
 
 ### Debug the App (Optional)
 
-Set a [breakpoint](https://code.visualstudio.com/Docs/editor/debugging){:target="_blank"} in the `async_fetch_sales_data_using_sqlite_query` function located in `sales_data.py` to observe how the LLM requests data.
+Set a [breakpoint](https://code.visualstudio.com/Docs/editor/debugging) in the `async_fetch_sales_data_using_sqlite_query` function located in `sales_data.py` to observe how the LLM requests data.
 
-![Breakpoint](./media/breakpoint.png){:width="600"}
+![Breakpoint](./media/breakpoint.png)
 
 ### Ask More Questions
 
