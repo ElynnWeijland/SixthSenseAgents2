@@ -162,8 +162,8 @@ Start asking questions about Contoso sales data. For example:
 
 3. **Show the 3 most recent transactions**
 
-    !!! info
-        This query is valuable for learning purposes because it provides insight into the structure of the underlying SQLite Contoso sales database.
+> INFO
+> This query is valuable for learning purposes because it provides insight into the structure of the underlying SQLite Contoso sales database.
 
 4. **Show sales by category for europe**
 5. **Breakout sales by footwear**
