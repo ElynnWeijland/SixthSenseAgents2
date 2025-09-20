@@ -31,5 +31,5 @@ By the end of this workshop, you will:
 When you finished the workshop, check out additional resources such as the samples in the [samples folder](src/samples) and the [official documentation](https://learn.microsoft.com/azure/ai-services/agents/overview).
 
 ### Samples overview
-- [Create AI Agent in AI Foundry UI](src/samples/create-agent-using-ui/lab-create-ai-agent-in-ai-foundry-ui.md)
-- tbc
+- [Create AI Agents using the AI Foundry UI](src/samples/create-agent-using-ui/lab-create-ai-agent-in-ai-foundry-ui.md)
+- [Create AI Agents using Jupyter Notebooks](src/samples/create-agent-using-notebook/lab-create-ai-agent-using-notebook.ipynb)
