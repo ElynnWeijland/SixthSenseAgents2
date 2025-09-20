@@ -26,3 +26,10 @@ By the end of this workshop, you will:
 
 👉 Start the full workshop here: [Introduction](docs/docs/introduction.md)
 
+## 📚 Additional Resources
+
+When you finished the workshop, check out additional resources such as the samples in the [samples folder](src/samples) and the [official documentation](https://learn.microsoft.com/azure/ai-services/agents/overview).
+
+### Samples overview
+- [Create AI Agent in AI Foundry UI](src/samples/create-agent-using-ui/lab-create-ai-agent-in-ai-foundry-ui.md)
+- tbc
