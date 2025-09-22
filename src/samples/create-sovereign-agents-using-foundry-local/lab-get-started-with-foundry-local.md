@@ -36,7 +36,7 @@ To list all available models, run:
 ```bash
 foundry model list
 ```
-You should see a list of available models, including "phi-3-mini", "gpt-4o-mini", and others:
+You should see a list of available models, including "phi-4-mini", "deepseek-r1-14b", and others:
 
 ![alt text](../../../media/image-foundrylocal1.png)
 
@@ -57,5 +57,7 @@ I’m a data engineer working for Capgemini. I’m planning to upskill myself on
 You should see the model response in the terminal:
 
 ![alt text](../../../media/image-foundrylocal5.png)
+
+> WARNING: In some cases the model responds very elaborately, which can cause a everlasting response. If this happens, you can stop the model by pressing `CTRL + C`. Don't worry about token usage, as you are running the model locally :-). 
 
 Well done! You have successfully set up Foundry Local and run your first AI model locally. You can now explore more models and experiment with different prompts. Sovereign AI is now at your fingertips!
