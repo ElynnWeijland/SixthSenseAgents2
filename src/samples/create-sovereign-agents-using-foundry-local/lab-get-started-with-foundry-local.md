@@ -2,7 +2,11 @@
 
 # Get Started with Foundry Local
 ## Description
-In this Lab, you’ll learn how to get started with Foundry Local and setting up AI models locally. 
+In this Lab, you’ll learn how to get started with Foundry Local and setting up AI models locally. To learn about the Foundry Local architecture, please visit the [official documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-local/concepts/foundry-local-architecture).
+
+Below the Foundry Local architecture diagram with the main components:
+
+![alt text](../../../media/image-foundry8.png)
 
 ### Prerequisites
 Your system must meet the following requirements to run Foundry Local:
