@@ -1,7 +1,7 @@
 ![alt text](../../../media/image-deepresearch1.png)
 
 # Deep Research Introduction
-Before diving into the Deep Research tool, it's important to understand its capabilities, prerequisites, and how to effectively utilize it within your Azure AI Foundry projects.
+Before diving into the Deep Research tool, it's important to understand its capabilities, prerequisites, and how to effectively utilize it within your Azure AI Foundry projects. 
 
 ## Model Details
 - **Model Name**: o3-deep-research  
@@ -19,9 +19,10 @@ Before diving into the Deep Research tool, it's important to understand its capa
     - Deep research model  
     - GPT model resources  
 - Set up your environment in the **West US** and **Norway East** regions.
-- Grounding with Bing Search tool resource for connecting to your Azure AI Foundry project.
+- Grounding with Bing Search tool resource for connecting to your Azure AI Foundry project. 
+- Capgemini network limitations: The **Bing Grounding API is blocked on the Capgemini network via Zscaler** (at this moment). To use the Deep Research tool, you will need to connect to a different compute environment that allows access to the Bing Search API. Using Codespaces or another non-Capgemini device is recommended.
 
-> IMPORTANT !!! This means that in order to use the Deep Research tool, you need to have access to the o3-deep-research model and set up the necessary Azure resources in one of the supported regions. As the default region for the workshop is East US, you might need to create a new Azure AI Foundry project in West US or Norway East to use the Deep Research tool.
+> IMPORTANT !!! This means that in order to use the Deep Research tool, you need to have access to the o3-deep-research model and set up the necessary Azure resources in one of the supported regions. As the default region for the workshop is East US, you might need to create a new Azure AI Foundry project in West US or Norway East to use the Deep Research tool. In addition, to make use of the Deep Research tool, the request access form must be filled out if you do not already have access to the o3 model. Please check with your instructor if the model access request has been submitted and approved before proceeding!
 
 ## Model Deployments
 - **o3-deep-research**:  
@@ -51,7 +52,7 @@ Save this endpoint to an environment file (.env) as **PROJECT_ENDPOINT**.
 
 ![alt text](../../../media/image-deepresearch2.png)
 
-Deploy the o3-deep-research-model and GPT-4o model.
+Deploy the o3-deep-research-model and GPT-4o model. For the o3-deep-research model, select version 2025-06-26 and choose a deployment name. You can leave the other settings as default.
 
 ![alt text](../../../media/image-deepresearch3.png)
 
@@ -90,16 +91,17 @@ You can install the package with the following command:
 
 ```python
 pip install --pre azure-ai-projects
+pip install azure-identity
 ```
 
 Create an environment file to store your environment variables. Create a file named `.env` in the root of your project directory and add the following content, replacing the placeholder values with your actual configuration details:
 
 ```python
 # Azure AI Foundry Project Configuration
-PROJECT_ENDPOINT="<your project endpoint>"
-MODEL_DEPLOYMENT_NAME="<your gpt-4o model deployment name>"
-DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME="<your deep research model deployment name>"
-BING_RESOURCE_NAME="<your grounding with bing search resource name>"
+PROJECT_ENDPOINT="<your project endpoint>" # e.g. https://<your foundry project resource url>.ai.azure.com/api/projects/<your project name>
+MODEL_DEPLOYMENT_NAME="<your gpt-4o model deployment name>" # e.g. gpt-4o
+DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME="<your deep research model deployment name>" # e.g. o3-deep-research
+BING_RESOURCE_NAME="<your grounding with bing search resource name>" # e.g. my-bing-connection, make sure to get the name from the Azure AI Foundry portal, don't use the name of the actual Azure Bing Search resource
 ``` 
 
 Create a new file named `create_deep_research_agent.py` and add the following code:
@@ -111,6 +113,9 @@ from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from azure.ai.agents import AgentsClient
 from azure.ai.agents.models import DeepResearchTool, MessageRole, ThreadMessage
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
 
 
 def fetch_and_print_new_agent_response(
