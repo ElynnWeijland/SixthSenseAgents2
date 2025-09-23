@@ -1,5 +1,10 @@
 ![alt text](../../../media/image-vibe1.png)
 
+## Introduction to vibe coding
+Did you promise to build a mockup interface for your customer but you don't know how to code? No worries, with Vibe Coding you can create a user interface for your agents in no time. This sample will guide you through the process of creating a simple user interface using Vibe Coding.
+
+> NOTE: Vibe coding is not recommended for production use cases. It is a great way to quickly create a user interface for your agents, but the generated code may not be optimal or follow best practices. Always review the generated code and make any necessary adjustments before using it in a production environment. Writing good code is still a skill that requires practice and experience and more importantly, human oversight. ;-)
+
 ## Vibe Coding Mockup UI Sample
 This sample demonstrates how to create a user interface for agents using Vibe Coding Mockup. The UI is designed to facilitate agent interactions and improve user experience. 
 
@@ -45,3 +50,21 @@ After a few minutes the application was running and we could see the user interf
 ![alt text](../../../media/image-vibe7.png)
 
 As you can see the user interface is relatively simple, but it demonstrates how to create a user interface for agents using vibe coding. You can further customize the UI by continuing asking questions to Github Copilot using Agent mode.
+
+If you run into any issues, simply ask the agent to help you fix the issues. In our case we had to fix a few issues with the code, but the agent was able to help us fix them quickly:
+
+![alt text](../../../media/image-vibe8.png)
+
+Go to the Copilot Chat and ask the agent to help you fix the issues by copying the error message from the terminal and pasting it into the chat input. The agent will then provide you with suggestions on how to fix the issues and if Agent mode is enabled it will start generating the code to fix the issues immediately:
+
+![alt text](../../../media/image-vibe9.png)
+
+In our case the agent was able to fix the issues  and also optimized the coloring and we were able to run the application without any errors:
+
+![alt text](../../../media/image-vibe10.png)
+
+## Conclusion
+In this sample we demonstrated how to create a user interface for agents using vibe coding. The generated code may not be optimal or follow best practices, so always review the generated code and make any necessary adjustments before using it in a production environment. Writing good code is still a skill that requires practice and experience and more importantly, human oversight. ;-)
+
+## Next Steps
+Look for a real UX-er / frontend developer and show them what you have built. Ask them to build an UI for you based on Enterprise Grade UX principles !!!
