@@ -25,6 +25,13 @@ source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 ```
 Open a new terminal in VS Code and make sure the virtual environment is activated.
 
+## Logon to Azure
+Make sure you are logged in to Azure CLI with the correct account that has sufficient permissions to your Azure resources:
+```bash
+az login --use-device-code
+```
+Make sure to choose the correct subscription if you have multiple subscriptions. 
+
 ## Install Python packages 
 Create requirements.txt file with the following content:
 ```
