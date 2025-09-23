@@ -58,7 +58,7 @@ import ssl
 from datetime import datetime
 from typing import Optional
 from dotenv import load_dotenv
-from azure.ai.projects import AIProjectClientla
+from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from azure.ai.agents import AgentsClient
 from azure.ai.agents.models import DeepResearchTool, MessageRole, ThreadMessage
