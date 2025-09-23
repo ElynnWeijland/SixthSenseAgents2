@@ -713,7 +713,7 @@ In the terminal, run the script:
 python lab-deep-research-tool-debugging-sample.py
 ```
 
-When you run the script from a corporate device and/or network you might see the following output:
+When you run the script from a corporate device and/or network where Bing Grounding is blocked (which was the case on our corporate device/network) you might see the following output:
 
 ![alt text](../../../media/image-deepresearch8.png)
 
