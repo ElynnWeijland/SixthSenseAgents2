@@ -72,6 +72,9 @@ module gpt41Deployment 'modules/aoai-model-deployment.bicep' = {
     modelName: 'gpt-4.1'
     capacity: 30
   }
+  dependsOn: [
+    aiProject
+  ]
 }
 
 module o3DeepResearchDeployment 'modules/aoai-model-deployment.bicep' = {
