@@ -102,7 +102,7 @@ AZURE_SUBSCRIPTION_ID=<YOUR AZURE SUBSCRIPTION ID> # the subscription ID of your
 AZURE_RESOURCE_GROUP_NAME=<YOUR AZURE RESOURCE GROUP NAME> # the name of the resource group where your Azure AI Foundry resource is located
 PROJECT_ENDPOINT=https://<YOUR AZURE AI FOUNDRY RESOURCE NAME>.services.ai.azure.com/api/projects/<YOUR AZURE AI FOUNDRY PROJECT NAME> # the endpoint of your Azure AI Foundry project, you can find it in the Azure portal
 AZURE_PROJECT_NAME=<YOUR AZURE AI FOUNDRY PROJECT NAME> # the name of your Azure AI Foundry project
-# BING_RESOURCE_NAME=<YOUR BING RESOURCE NAME> # don't use the Azure Resource name, use the name that you see in Azure AI Foundry when you create a Bing Grounding resource
+# BING_RESOURCE_NAME=<YOUR BING RESOURCE NAME> # optional usage of Bing requires you to uncomment this line and provide the name of your Bing Grounding resource
 AGENT_MODEL_DEPLOYMENT_NAME=gpt-4o # or your custom GPT-4o deployment name
 DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME=o3-deep-research # or your custom Deep Research model deployment name
 ```
