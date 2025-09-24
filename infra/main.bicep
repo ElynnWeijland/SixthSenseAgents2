@@ -82,4 +82,7 @@ module o3DeepResearchDeployment 'modules/aoai-model-deployment.bicep' = {
     modelName: 'o3-deep-research'
     capacity: 10
   }
+  dependsOn: [
+    gpt41Deployment
+  ]
 }
