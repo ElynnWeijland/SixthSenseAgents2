@@ -73,3 +73,13 @@ module gpt41Deployment 'modules/aoai-model-deployment.bicep' = {
     capacity: 30
   }
 }
+
+module o3DeepResearchDeployment 'modules/aoai-model-deployment.bicep' = {
+  name: 'o3-deep-research-${name}-${uniqueSuffix}-deployment'
+  params: {
+    openAIAccountId: aiFoundry.outputs.aiFoundryId
+    deploymentName: 'o3-deep-research'
+    modelName: 'o3-deep-research'
+    capacity: 10
+  }
+}
