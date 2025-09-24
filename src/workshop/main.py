@@ -25,8 +25,11 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 TENTS_DATA_SHEET_FILE = "datasheet/contoso-tents-datasheet.pdf"
-API_DEPLOYMENT_NAME = os.getenv("MODEL_DEPLOYMENT_NAME")
+API_DEPLOYMENT_NAME = os.getenv("AGENT_MODEL_DEPLOYMENT_NAME")
 PROJECT_ENDPOINT = os.environ["PROJECT_ENDPOINT"]
+AZURE_SUBSCRIPTION_ID = os.environ["AZURE_SUBSCRIPTION_ID"]
+AZURE_RESOURCE_GROUP_NAME = os.environ["AZURE_RESOURCE_GROUP_NAME"]
+AZURE_PROJECT_NAME = os.environ["AZURE_PROJECT_NAME"]
 BING_CONNECTION_NAME = os.getenv("BING_CONNECTION_NAME")
 MAX_COMPLETION_TOKENS = 4096
 MAX_PROMPT_TOKENS = 10240
@@ -38,8 +41,11 @@ sales_data = SalesData()
 utilities = Utilities()
 
 project_client = AIProjectClient(
-    credential=DefaultAzureCredential(),
     endpoint=PROJECT_ENDPOINT,
+    credential=DefaultAzureCredential(),
+    subscription_id=AZURE_SUBSCRIPTION_ID,
+    resource_group_name=AZURE_RESOURCE_GROUP_NAME,
+    project_name=AZURE_PROJECT_NAME,
 )
 
 functions = AsyncFunctionTool(
