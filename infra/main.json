@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "7922274830118515537"
+      "templateHash": "217554227340158449"
     }
   },
   "parameters": {
@@ -51,13 +51,6 @@
       "defaultValue": "Knights of the Prompts",
       "metadata": {
         "description": "Project description"
-      }
-    },
-    "deployBingGroundingSearch": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "Whether to deploy Grounding with Bing Search resource"
       }
     }
   },
@@ -467,142 +460,6 @@
             "aiFoundryPrincipalId": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiFoundryName')), '2025-06-01', 'full').identity.principalId]"
-            }
-          }
-        }
-      }
-    },
-    {
-      "condition": "[parameters('deployBingGroundingSearch')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
-      "name": "[format('bing-grounding-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "bingGroundingSearchName": {
-            "value": "[format('bgs-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
-          },
-          "bingGroundingSearchFriendlyName": {
-            "value": "[format('Grounding with Bing Search for {0}', parameters('aiFoundryFriendlyName'))]"
-          },
-          "bingGroundingSearchDescription": {
-            "value": "[format('Grounding with Bing Search resource for AI agents in {0}', parameters('aiFoundryFriendlyName'))]"
-          },
-          "tags": {
-            "value": "[parameters('tags')]"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.37.4.10188",
-              "templateHash": "1449829911872218206"
-            }
-          },
-          "parameters": {
-            "tags": {
-              "type": "object",
-              "metadata": {
-                "description": "Tags to add to the resources"
-              }
-            },
-            "bingGroundingSearchName": {
-              "type": "string",
-              "metadata": {
-                "description": "Grounding with Bing Search resource name"
-              }
-            },
-            "bingGroundingSearchFriendlyName": {
-              "type": "string",
-              "defaultValue": "[parameters('bingGroundingSearchName')]",
-              "metadata": {
-                "description": "Grounding with Bing Search display name"
-              }
-            },
-            "bingGroundingSearchDescription": {
-              "type": "string",
-              "defaultValue": "Grounding with Bing Search for AI agents",
-              "metadata": {
-                "description": "Grounding with Bing Search description"
-              }
-            },
-            "skuName": {
-              "type": "string",
-              "defaultValue": "S1",
-              "allowedValues": [
-                "S1"
-              ],
-              "metadata": {
-                "description": "The SKU name for the Grounding with Bing Search resource"
-              }
-            },
-            "publicNetworkAccess": {
-              "type": "string",
-              "defaultValue": "Enabled",
-              "allowedValues": [
-                "Enabled",
-                "Disabled"
-              ],
-              "metadata": {
-                "description": "Whether public network access is allowed"
-              }
-            },
-            "disableLocalAuth": {
-              "type": "bool",
-              "defaultValue": false,
-              "metadata": {
-                "description": "Whether to disable local authentication"
-              }
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Bing/accounts",
-              "apiVersion": "2025-05-01-preview",
-              "name": "[parameters('bingGroundingSearchName')]",
-              "location": "global",
-              "tags": "[union(parameters('tags'), createObject('displayName', parameters('bingGroundingSearchFriendlyName'), 'description', parameters('bingGroundingSearchDescription')))]",
-              "kind": "BingGroundingSearch",
-              "identity": {
-                "type": "SystemAssigned"
-              },
-              "sku": {
-                "name": "[parameters('skuName')]"
-              },
-              "properties": {
-                "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
-                "disableLocalAuth": "[parameters('disableLocalAuth')]",
-                "networkAcls": {
-                  "defaultAction": "Allow",
-                  "ipRules": [],
-                  "virtualNetworkRules": []
-                }
-              }
-            }
-          ],
-          "outputs": {
-            "bingGroundingSearchId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.Bing/accounts', parameters('bingGroundingSearchName'))]"
-            },
-            "bingGroundingSearchName": {
-              "type": "string",
-              "value": "[parameters('bingGroundingSearchName')]"
-            },
-            "bingGroundingSearchEndpoint": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Bing/accounts', parameters('bingGroundingSearchName')), '2025-05-01-preview').endpoint]"
-            },
-            "bingGroundingSearchPrincipalId": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.Bing/accounts', parameters('bingGroundingSearchName')), '2025-05-01-preview', 'full').identity.principalId]"
             }
           }
         }

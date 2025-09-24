@@ -21,9 +21,6 @@ param tags object = {}
 @description('Project description')
 param aiProjectDescription string = 'Knights of the Prompts'
 
-@description('Whether to deploy Grounding with Bing Search resource')
-param deployBingGroundingSearch bool = true
-
 // Variables
 var name = toLower('${aiFoundryName}')
 
@@ -53,16 +50,6 @@ module aiFoundry 'modules/ai-foundry.bicep' = {
     location: location
     tags: tags
     customSubDomainName: 'aif-${name}-${uniqueSuffix}'
-  }
-}
-
-module bingGroundingSearch 'modules/bing-grounding-search.bicep' = if (deployBingGroundingSearch) {
-  name: 'bing-grounding-${name}-${uniqueSuffix}-deployment'
-  params: {
-    bingGroundingSearchName: 'bgs-${name}-${uniqueSuffix}'
-    bingGroundingSearchFriendlyName: 'Grounding with Bing Search for ${aiFoundryFriendlyName}'
-    bingGroundingSearchDescription: 'Grounding with Bing Search resource for AI agents in ${aiFoundryFriendlyName}'
-    tags: tags
   }
 }
 
