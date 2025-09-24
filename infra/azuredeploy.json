@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.37.4.10188",
-      "templateHash": "18362963251591120130"
+      "version": "0.24.24.22086",
+      "templateHash": "14215818965713803237"
     }
   },
   "parameters": {
@@ -94,8 +94,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.37.4.10188",
-              "templateHash": "12284238033351725179"
+              "version": "0.24.24.22086",
+              "templateHash": "1030076532437697084"
             }
           },
           "parameters": {
@@ -344,8 +344,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.37.4.10188",
-              "templateHash": "4588410182640437966"
+              "version": "0.24.24.22086",
+              "templateHash": "11390303303971370668"
             }
           },
           "parameters": {
@@ -497,8 +497,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.37.4.10188",
-              "templateHash": "7037646981989791444"
+              "version": "0.24.24.22086",
+              "templateHash": "9695759704186886963"
             }
           },
           "parameters": {
@@ -606,8 +606,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.37.4.10188",
-              "templateHash": "3303494325070596986"
+              "version": "0.24.24.22086",
+              "templateHash": "11188682301152685978"
             }
           },
           "parameters": {
@@ -631,6 +631,32 @@
                 "description": "Model name."
               }
             },
+            "modelVersion": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Model version."
+              }
+            },
+            "versionUpgradeOption": {
+              "type": "string",
+              "defaultValue": "OnceNewDefaultVersionAvailable",
+              "allowedValues": [
+                "OnceNewDefaultVersionAvailable",
+                "OnceCurrentVersionExpired",
+                "NoAutoUpgrade"
+              ],
+              "metadata": {
+                "description": "Version upgrade option."
+              }
+            },
+            "raiPolicyName": {
+              "type": "string",
+              "defaultValue": "Microsoft.DefaultV2",
+              "metadata": {
+                "description": "RAI policy name."
+              }
+            },
             "capacity": {
               "type": "int",
               "defaultValue": 30,
@@ -643,7 +669,7 @@
           "resources": [
             {
               "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2024-10-01",
+              "apiVersion": "2025-06-01",
               "name": "[format('{0}/{1}', variables('openAIAccountName'), parameters('deploymentName'))]",
               "sku": {
                 "name": "GlobalStandard",
@@ -652,8 +678,12 @@
               "properties": {
                 "model": {
                   "name": "[parameters('modelName')]",
-                  "format": "OpenAI"
-                }
+                  "format": "OpenAI",
+                  "version": "[if(not(empty(parameters('modelVersion'))), parameters('modelVersion'), null())]"
+                },
+                "versionUpgradeOption": "[parameters('versionUpgradeOption')]",
+                "currentCapacity": "[parameters('capacity')]",
+                "raiPolicyName": "[parameters('raiPolicyName')]"
               }
             }
           ],
@@ -674,7 +704,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
+        "[resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Resources/deployments', format('project-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
       ]
     },
     {
@@ -696,8 +727,17 @@
           "modelName": {
             "value": "o3-deep-research"
           },
+          "modelVersion": {
+            "value": "2025-06-26"
+          },
           "capacity": {
-            "value": 10
+            "value": 250
+          },
+          "versionUpgradeOption": {
+            "value": "OnceNewDefaultVersionAvailable"
+          },
+          "raiPolicyName": {
+            "value": "Microsoft.DefaultV2"
           }
         },
         "template": {
@@ -706,8 +746,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.37.4.10188",
-              "templateHash": "3303494325070596986"
+              "version": "0.24.24.22086",
+              "templateHash": "11188682301152685978"
             }
           },
           "parameters": {
@@ -731,6 +771,32 @@
                 "description": "Model name."
               }
             },
+            "modelVersion": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Model version."
+              }
+            },
+            "versionUpgradeOption": {
+              "type": "string",
+              "defaultValue": "OnceNewDefaultVersionAvailable",
+              "allowedValues": [
+                "OnceNewDefaultVersionAvailable",
+                "OnceCurrentVersionExpired",
+                "NoAutoUpgrade"
+              ],
+              "metadata": {
+                "description": "Version upgrade option."
+              }
+            },
+            "raiPolicyName": {
+              "type": "string",
+              "defaultValue": "Microsoft.DefaultV2",
+              "metadata": {
+                "description": "RAI policy name."
+              }
+            },
             "capacity": {
               "type": "int",
               "defaultValue": 30,
@@ -743,7 +809,7 @@
           "resources": [
             {
               "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2024-10-01",
+              "apiVersion": "2025-06-01",
               "name": "[format('{0}/{1}', variables('openAIAccountName'), parameters('deploymentName'))]",
               "sku": {
                 "name": "GlobalStandard",
@@ -752,8 +818,12 @@
               "properties": {
                 "model": {
                   "name": "[parameters('modelName')]",
-                  "format": "OpenAI"
-                }
+                  "format": "OpenAI",
+                  "version": "[if(not(empty(parameters('modelVersion'))), parameters('modelVersion'), null())]"
+                },
+                "versionUpgradeOption": "[parameters('versionUpgradeOption')]",
+                "currentCapacity": "[parameters('capacity')]",
+                "raiPolicyName": "[parameters('raiPolicyName')]"
               }
             }
           ],
@@ -774,7 +844,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
+        "[resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Resources/deployments', format('gpt41-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
       ]
     }
   ]

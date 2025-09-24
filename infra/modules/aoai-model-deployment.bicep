@@ -7,6 +7,16 @@ param deploymentName string = 'gpt41'
 @description('Model name.')
 param modelName string = 'gpt-4.1'
 
+@description('Model version.')
+param modelVersion string = ''
+
+@description('Version upgrade option.')
+@allowed(['OnceNewDefaultVersionAvailable', 'OnceCurrentVersionExpired', 'NoAutoUpgrade'])
+param versionUpgradeOption string = 'OnceNewDefaultVersionAvailable'
+
+@description('RAI policy name.')
+param raiPolicyName string = 'Microsoft.DefaultV2'
+
 @minValue(1)
 param capacity int = 30
 
@@ -16,7 +26,7 @@ resource openAI 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: openAIAccountName
 }
 
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
   name: deploymentName
   parent: openAI
   sku: {
@@ -27,9 +37,11 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
     model: {
       name: modelName
       format: 'OpenAI'
+      version: !empty(modelVersion) ? modelVersion : null
     }
-    // Optional: versionUpgradeOption: 'OnceCurrentVersionExpired' | 'NoAutoUpgrade'
-    // Optional: raiPolicyName: 'Microsoft.Default'
+    versionUpgradeOption: versionUpgradeOption
+    currentCapacity: capacity
+    raiPolicyName: raiPolicyName
   }
 }
 

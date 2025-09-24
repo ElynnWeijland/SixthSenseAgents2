@@ -83,7 +83,10 @@ module o3DeepResearchDeployment 'modules/aoai-model-deployment.bicep' = {
     openAIAccountId: aiFoundry.outputs.aiFoundryId
     deploymentName: 'o3-deep-research'
     modelName: 'o3-deep-research'
-    capacity: 10
+    modelVersion: '2025-06-26'
+    capacity: 250
+    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
+    raiPolicyName: 'Microsoft.DefaultV2'
   }
   dependsOn: [
     gpt41Deployment
