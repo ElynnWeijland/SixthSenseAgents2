@@ -1,3 +1,6 @@
+
+# TODO: Test new project endpoint connection method. Change project client and test !!!
+
 import asyncio
 from datetime import date
 import logging
