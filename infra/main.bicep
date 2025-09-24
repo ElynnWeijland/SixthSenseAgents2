@@ -4,13 +4,13 @@
 @minLength(2)
 @maxLength(12)
 @description('Name for the AI resource and used to derive name of dependent resources.')
-param aiHubName string = 'demo'
+param aiFoundryName string = 'demo'
 
-@description('Friendly name for your Azure AI resource')
-param aiHubFriendlyName string = 'Demo AI resource'
+@description('Friendly name for your Azure AI Foundry resource')
+param aiFoundryFriendlyName string = 'Demo AI Foundry resource'
 
-@description('Description of your Azure AI resource displayed in AI Foundry')
-param aiHubDescription string = 'This is an example AI resource for use in Azure AI Foundry.'
+@description('Description of your Azure AI Foundry resource displayed in AI Foundry')
+param aiFoundryDescription string = 'This is an example AI Foundry resource for use in Azure AI Foundry.'
 
 @description('Azure region used for the deployment of all resources.')
 param location string = resourceGroup().location
@@ -22,12 +22,12 @@ param tags object = {}
 param aiProjectDescription string = 'Knights of the Prompts'
 
 // Variables
-var name = toLower('${aiHubName}')
+var name = toLower('${aiFoundryName}')
 
 // Create a short, unique suffix, that will be unique to each resource group
 var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 4)
 
-// Dependent resources for the Azure Machine Learning workspace
+// Dependent resources for the Azure AI Foundry workspace
 module aiDependencies 'modules/dependent-resources.bicep' = {
   name: 'dependencies-${name}-${uniqueSuffix}-deployment'
   params: {
@@ -36,28 +36,20 @@ module aiDependencies 'modules/dependent-resources.bicep' = {
     keyvaultName: 'kv-${name}-${uniqueSuffix}'
     applicationInsightsName: 'appi-${name}-${uniqueSuffix}'
     containerRegistryName: 'cr${name}${uniqueSuffix}'
-    aiServicesName: 'ais${name}${uniqueSuffix}'
     tags: tags
   }
 }
 
-module aiHub 'modules/ai-hub.bicep' = {
-  name: 'ai-${name}-${uniqueSuffix}-deployment'
+module aiFoundry 'modules/ai-foundry.bicep' = {
+  name: 'foundry-${name}-${uniqueSuffix}-deployment'
   params: {
     // workspace organization
-    aiHubName: 'aih-${name}-${uniqueSuffix}'
-    aiHubFriendlyName: aiHubFriendlyName
-    aiHubDescription: aiHubDescription
+    aiFoundryName: 'aif-${name}-${uniqueSuffix}'
+    aiFoundryFriendlyName: aiFoundryFriendlyName
+    aiFoundryDescription: aiFoundryDescription
     location: location
     tags: tags
-
-    // dependent resources
-    aiServicesId: aiDependencies.outputs.aiservicesId
-    aiServicesTarget: aiDependencies.outputs.aiservicesTarget
-    applicationInsightsId: aiDependencies.outputs.applicationInsightsId
-    containerRegistryId: aiDependencies.outputs.containerRegistryId
-    keyVaultId: aiDependencies.outputs.keyvaultId
-    storageAccountId: aiDependencies.outputs.storageId
+    customSubDomainName: 'aif-${name}-${uniqueSuffix}'
   }
 }
 
@@ -68,14 +60,14 @@ module aiProject 'modules/ai-project.bicep' = {
     tags: tags
     aiProjectName: 'prj-${name}-${uniqueSuffix}'
     aiProjectDescription: aiProjectDescription
-    hubId: aiHub.outputs.aiHubID
+    aiFoundryId: aiFoundry.outputs.aiFoundryId
   }
 }
 
 module gpt41Deployment 'modules/aoai-model-deployment.bicep' = {
   name: 'gpt41-${name}-${uniqueSuffix}-deployment'
   params: {
-    openAIAccountId: aiDependencies.outputs.aiservicesId
+    openAIAccountId: aiFoundry.outputs.aiFoundryId
     deploymentName: 'gpt41'
     modelName: 'gpt-4.1'
     capacity: 30

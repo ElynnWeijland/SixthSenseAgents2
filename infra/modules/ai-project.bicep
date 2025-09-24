@@ -1,41 +1,43 @@
+// Creates an Azure AI Foundry project as a child resource
+
 @description('Azure region of the deployment')
 param location string
 
 @description('Tags to add to the resources')
 param tags object = {}
 
-@description('Project workspace name')
+@description('Project name')
 param aiProjectName string
 
 @description('Project display name')
 param aiProjectFriendlyName string = aiProjectName
 
 @description('Project description')
-param aiProjectDescription string = 'Sample project'
+param aiProjectDescription string = 'Azure AI Foundry project'
 
-@description('Resource ID of the hub (kind=hub) workspace')
-param hubId string
+@description('Resource ID of the parent AI Foundry resource')
+param aiFoundryId string
 
-// NOTE: The linking property name can vary in previews.
-// Commonly it is one of: hubId or hub.
-// Keep only the correct property after verifying with:
-// az bicep types show --resource-type Microsoft.MachineLearningServices/workspaces --api-version 2023-08-01-preview | grep -i hub
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+// Extract the AI Foundry account name from the resource ID
+var aiFoundryAccountName = last(split(aiFoundryId, '/'))
+
+resource aiFoundry 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+  name: aiFoundryAccountName
+}
+
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
   name: aiProjectName
+  parent: aiFoundry
   location: location
   tags: tags
-  kind: 'project'
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    friendlyName: aiProjectFriendlyName
+    displayName: aiProjectFriendlyName
     description: aiProjectDescription
-
-    // Try hubId first; if validation fails, swap to 'hub'
-    hubResourceId: hubId
-    // hub: hubId
   }
 }
 
 output aiProjectId string = aiProject.id
+output aiProjectName string = aiProject.name

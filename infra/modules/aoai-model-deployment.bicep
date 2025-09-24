@@ -1,4 +1,4 @@
-@description('Resource ID of an Azure OpenAI account (kind=OpenAI).')
+@description('Resource ID of an Azure AI Foundry resource (kind=AIServices) or Azure OpenAI account (kind=OpenAI).')
 param openAIAccountId string
 
 @description('Deployment name.')
@@ -12,11 +12,11 @@ param capacity int = 30
 
 var openAIAccountName = last(split(openAIAccountId, '/'))
 
-resource openAI 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = {
+resource openAI 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: openAIAccountName
 }
 
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
   name: deploymentName
   parent: openAI
   sku: {

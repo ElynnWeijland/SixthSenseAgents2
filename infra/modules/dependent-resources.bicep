@@ -6,9 +6,6 @@ param location string = resourceGroup().location
 @description('Tags to add to the resources')
 param tags object = {}
 
-@description('AI services name')
-param aiServicesName string
-
 @description('Application Insights resource name')
 param applicationInsightsName string
 
@@ -112,17 +109,6 @@ param storageSkuName string = 'Standard_LRS'
 
 var storageNameCleaned = replace(storageName, '-', '')
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2021-10-01' = {
-  name: aiServicesName
-  location: location
-  sku: {
-    name: 'S0'
-  }
-  kind: 'AIServices' // or 'OpenAI'
-  properties: {
-  }
-}
-
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageNameCleaned
   location: location
@@ -173,8 +159,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
-output aiservicesId string = aiServices.id
-output aiservicesTarget string = aiServices.properties.endpoint
 output storageId string = storage.id
 output keyvaultId string = keyVault.id
 output containerRegistryId string = containerRegistry.id

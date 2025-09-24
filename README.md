@@ -40,6 +40,9 @@ Deep Research Tool:
 - [Create Agents with the Deep Research Tool](src/samples/create-deep-research-tool/lab-how-to-use-the-deep-research-tool.md)
 - [Debugging sample for the Deep Research Tool](src/samples/create-deep-research-tool/lab-deep-research-tool-debugging-sample.md)
 
+Agent Orchestration:
+
+
 Sovereign AI using Foundry Local:
 - [Setup Foundry Local to go Sovereign](src/samples/create-sovereign-agents-using-foundry-local/lab-get-started-with-foundry-local.md)
 - [Use OpenAI SDK with Foundry Local](src/samples/create-sovereign-agents-using-foundry-local/lab-use-openai-sdk-with-foundry-local.md)
