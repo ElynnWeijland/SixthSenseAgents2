@@ -101,4 +101,4 @@ Try these questions:
 When you're done, type **exit**, or press <kbd>Shift</kbd>+<kbd>F5</kbd> to stop the agent app.
 
 ## Next Lab
-Proceed to the next lab: [Lab 2 - Code Interpreter](lab-3-file_search.md)
+Proceed to the next lab: [Lab 3 - File Search](lab-3-file_search.md)

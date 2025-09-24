@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.24.24.22086",
-      "templateHash": "16786512990971307699"
+      "version": "0.37.4.10188",
+      "templateHash": "3165507911055685792"
     }
   },
   "parameters": {
@@ -52,6 +52,13 @@
       "metadata": {
         "description": "Project description"
       }
+    },
+    "deployBingGroundingSearch": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether to deploy Grounding with Bing Search resource"
+      }
     }
   },
   "variables": {
@@ -94,8 +101,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "1030076532437697084"
+              "version": "0.37.4.10188",
+              "templateHash": "12284238033351725179"
             }
           },
           "parameters": {
@@ -344,8 +351,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "11390303303971370668"
+              "version": "0.37.4.10188",
+              "templateHash": "4588410182640437966"
             }
           },
           "parameters": {
@@ -466,6 +473,151 @@
       }
     },
     {
+      "condition": "[parameters('deployBingGroundingSearch')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('bing-grounding-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "bingGroundingSearchName": {
+            "value": "[format('bgs-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+          },
+          "bingGroundingSearchFriendlyName": {
+            "value": "[format('Grounding with Bing Search for {0}', parameters('aiFoundryFriendlyName'))]"
+          },
+          "bingGroundingSearchDescription": {
+            "value": "[format('Grounding with Bing Search resource for AI agents in {0}', parameters('aiFoundryFriendlyName'))]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "7445087298941204773"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region of the deployment"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to add to the resources"
+              }
+            },
+            "bingGroundingSearchName": {
+              "type": "string",
+              "metadata": {
+                "description": "Grounding with Bing Search resource name"
+              }
+            },
+            "bingGroundingSearchFriendlyName": {
+              "type": "string",
+              "defaultValue": "[parameters('bingGroundingSearchName')]",
+              "metadata": {
+                "description": "Grounding with Bing Search display name"
+              }
+            },
+            "bingGroundingSearchDescription": {
+              "type": "string",
+              "defaultValue": "Grounding with Bing Search for AI agents",
+              "metadata": {
+                "description": "Grounding with Bing Search description"
+              }
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "S1",
+              "allowedValues": [
+                "S1"
+              ],
+              "metadata": {
+                "description": "The SKU name for the Grounding with Bing Search resource"
+              }
+            },
+            "publicNetworkAccess": {
+              "type": "string",
+              "defaultValue": "Enabled",
+              "allowedValues": [
+                "Enabled",
+                "Disabled"
+              ],
+              "metadata": {
+                "description": "Whether public network access is allowed"
+              }
+            },
+            "disableLocalAuth": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Whether to disable local authentication"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Bing/accounts",
+              "apiVersion": "2025-05-01-preview",
+              "name": "[parameters('bingGroundingSearchName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('displayName', parameters('bingGroundingSearchFriendlyName'), 'description', parameters('bingGroundingSearchDescription')))]",
+              "kind": "BingGroundingSearch",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
+                "disableLocalAuth": "[parameters('disableLocalAuth')]",
+                "networkAcls": {
+                  "defaultAction": "Allow",
+                  "ipRules": [],
+                  "virtualNetworkRules": []
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "bingGroundingSearchId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Bing/accounts', parameters('bingGroundingSearchName'))]"
+            },
+            "bingGroundingSearchName": {
+              "type": "string",
+              "value": "[parameters('bingGroundingSearchName')]"
+            },
+            "bingGroundingSearchEndpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Bing/accounts', parameters('bingGroundingSearchName')), '2025-05-01-preview').endpoint]"
+            },
+            "bingGroundingSearchPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Bing/accounts', parameters('bingGroundingSearchName')), '2025-05-01-preview', 'full').identity.principalId]"
+            }
+          }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "[format('project-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
@@ -497,8 +649,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "9695759704186886963"
+              "version": "0.37.4.10188",
+              "templateHash": "7037646981989791444"
             }
           },
           "parameters": {
@@ -606,8 +758,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "12735514645426573079"
+              "version": "0.37.4.10188",
+              "templateHash": "3303494325070596986"
             }
           },
           "parameters": {

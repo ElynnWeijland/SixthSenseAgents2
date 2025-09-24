@@ -10,6 +10,9 @@
         },
         "tags":{
             "value": {}
+        },
+        "deployBingGroundingSearch": {
+            "value": true
         }
     }
 }

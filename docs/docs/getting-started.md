@@ -96,10 +96,29 @@ You can get the project connection string from Azure AI Foundry portal. Go to th
 
 Your **.env** file should look similar to this but with your project connection string.
 
-```python
-MODEL_DEPLOYMENT_NAME="gpt41"
-PROJECT_CONNECTION_STRING="<your_project_connection_string>"
+```bash
+# Azure AI Foundry Project Configuration
+AZURE_SUBSCRIPTION_ID=<YOUR AZURE SUBSCRIPTION ID> # the subscription ID of your Azure subscription
+AZURE_RESOURCE_GROUP_NAME=<YOUR AZURE RESOURCE GROUP NAME> # the name of the resource group where your Azure AI Foundry resource is located
+PROJECT_ENDPOINT=https://<YOUR AZURE AI FOUNDRY RESOURCE NAME>.services.ai.azure.com/api/projects/<YOUR AZURE AI FOUNDRY PROJECT NAME> # the endpoint of your Azure AI Foundry project, you can find it in the Azure portal
+AZURE_PROJECT_NAME=<YOUR AZURE AI FOUNDRY PROJECT NAME> # the name of your Azure AI Foundry project
+BING_RESOURCE_NAME=<YOUR BING RESOURCE NAME> # don't use the Azure Resource name, use the name that you see in Azure AI Foundry when you create a Bing Grounding resource
+AGENT_MODEL_DEPLOYMENT_NAME=gpt-4o # or your custom GPT-4o deployment name
+DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME=o3-deep-research # or your custom Deep Research model deployment name
 ```
+
+## Where to find the values for the .env file
+To get the AZURE_SUBSCRIPTION_ID and AZURE_RESOURCE_GROUP_NAME, go to the Azure portal, select your Resource Group, and copy the **Subscription ID** and **Resource Group Name**:
+![alt text](image.png)
+
+Next, click on the **Azure AI Foundry project resource** and click on Resource Management > Endpoints to get the PROJECT_ENDPOINT:
+![alt text](image-5.png)
+![alt text](image-4.png)
+
+The AZURE_PROJECT_NAME is the name of your Azure AI Foundry project which you can find in the same UI. It is also part of the PROJECT_ENDPOINT at the end of the URL (i.e. https://your-resource-name.services.ai.azure.com/api/projects/< project name >).
+
+To get the BING_RESOURCE_NAME, go to your Azure AI Foundry project in the Azure portal, click on **Grounding** in the left menu, and copy the name of your Bing Grounding resource:
+
 Now your codespace is ready, let's move to the next step!
 
 ## Next 

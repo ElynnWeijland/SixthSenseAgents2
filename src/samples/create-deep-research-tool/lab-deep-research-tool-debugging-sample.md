@@ -5,18 +5,9 @@ In this sample we will show you how to debug issues when using the Deep Research
 
 A fun fact is that we had to debug the Deep Research Tool when we were creating the Deep Research Tool sample, so we know from experience that this can be very useful! In fact, using this debugging code, we found out that the Deep Research Tool was not working because our Zscaler network was blocking the Bing Grounding service. So, if you are using a corporate network, make sure that the Bing Grounding service is not blocked!
 
-## Setup the .env file
-Make sure you have a `.env` file in the same directory as your script with the following content:
-```
-# Azure AI Foundry Project Configuration
-AZURE_SUBSCRIPTION_ID=<YOUR AZURE SUBSCRIPTION ID>
-AZURE_RESOURCE_GROUP_NAME=<YOUR AZURE RESOURCE GROUP NAME>
-AGENT_MODEL_DEPLOYMENT_NAME=gpt-4o # or your custom GPT-4o deployment name
-DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME=o3-deep-research # or your custom Deep Research model deployment name
-BING_RESOURCE_NAME=<YOUR BING RESOURCE NAME>
-AZURE_PROJECT_NAME=<YOUR AZURE AI FOUNDRY PROJECT NAME>
-PROJECT_ENDPOINT=https://<YOUR AZURE AI FOUNDRY RESOURCE NAME>.services.ai.azure.com/api/projects/<YOUR AZURE AI FOUNDRY PROJECT NAME>
-```
+## Setup or validate the .env file
+Make sure you have a `.env` file configured. If you haven't done this yet, you can create one by copying the `.env.sample` file and filling in your Azure AI Foundry project details. If you ran the [Getting Started](docs/docs/getting-started.md) lab, you should already have this file configured.
+
 ## Create a virtual environment
 Create a virtual environment to manage your Python dependencies. Run the following commands in your terminal:
 ```bash
