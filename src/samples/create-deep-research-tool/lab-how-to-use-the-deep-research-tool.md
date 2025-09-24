@@ -63,24 +63,14 @@ Deploy an Azure OpenAI GPT model that is supported for Deep Research, such as gp
 
 ![alt text](../../../media/image-deepresearch4.png)
 
-Save the name of your o3-deep-research deployment and gpt-4o deployment to your environment file as **DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME** and **MODEL_DEPLOYMENT_NAME** respectively.
-
-Connect a Grounding with Bing Search account.
-
-![alt text](../../../media/image-deepresearch5.png)
-
-The name of your Grounding with Bing Search resource name. You can find it in the Azure AI Foundry portal by selecting Management center from the left navigation menu. Then select Connected resources.
-
-![alt text](../../../media/image-deepresearch6.png)
-
-Save the name of your Grounding with Bing Search resource to your environment file as **BING_RESOURCE_NAME**.
+## Connect Bing Grounding to your project
+To use the Deep Research tool, you need to connect a Bing Grounding resource to your Azure AI Foundry project. If you haven't done this yet, follow the instructions in this lab: [Create a Bing Grounding connection](../create-a-bing-grounding-connection/lab-create-a-bing-grounding-connection.md).
 
 # Create an agent with the Deep Research tool
 Assuming a new Azure AI Foundry project has been created in either West US or Norway East, follow the steps below to create an agent with the Deep Research tool.
 
-The Deep Research tool requires the latest prerelease versions of the azure-ai-projects library. First we recommend creating a virtual environment to work in:
-
-Console
+## Setup the Python environment
+The Deep Research tool requires the latest prerelease versions of the azure-ai-projects library. First we recommend creating a virtual environment to work in. If you haven't done already create one:
 
 ```python
 python -m venv env
@@ -94,16 +84,9 @@ pip install --pre azure-ai-projects
 pip install azure-identity
 ```
 
-Create an environment file to store your environment variables. Create a file named `.env` in the root of your project directory and add the following content, replacing the placeholder values with your actual configuration details:
+Make sure you have a .env file with the right environment variables. If you don't have this already have a look at the Getting Started manual: [Getting Started](../../docs/docs/getting-started.md) to create yours.
 
-```python
-# Azure AI Foundry Project Configuration
-PROJECT_ENDPOINT="<your project endpoint>" # e.g. https://<your foundry project resource url>.ai.azure.com/api/projects/<your project name>
-MODEL_DEPLOYMENT_NAME="<your gpt-4o model deployment name>" # e.g. gpt-4o
-DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME="<your deep research model deployment name>" # e.g. o3-deep-research
-BING_RESOURCE_NAME="<your grounding with bing search resource name>" # e.g. my-bing-connection, make sure to get the name from the Azure AI Foundry portal, don't use the name of the actual Azure Bing Search resource
-``` 
-
+## Create the Deep Research script 
 Create a new file named `create_deep_research_agent.py` and add the following code:
 
 ```python
@@ -116,7 +99,6 @@ from azure.ai.agents.models import DeepResearchTool, MessageRole, ThreadMessage
 from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
-
 
 def fetch_and_print_new_agent_response(
     thread_id: str,

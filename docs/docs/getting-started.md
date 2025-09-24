@@ -109,11 +109,11 @@ DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME=o3-deep-research # or your custom Deep Resea
 
 ## Where to find the values for the .env file
 To get the AZURE_SUBSCRIPTION_ID and AZURE_RESOURCE_GROUP_NAME, go to the Azure portal, select your Resource Group, and copy the **Subscription ID** and **Resource Group Name**:
-![alt text](image.png)
+![alt text](../../media/image-start6.png)
 
 Next, click on the **Azure AI Foundry project resource** and click on Resource Management > Endpoints to get the PROJECT_ENDPOINT:
-![alt text](image-5.png)
-![alt text](image-4.png)
+![alt text](../../media/image-start5.png)
+![alt text](../../media/image-start4.png)
 
 The AZURE_PROJECT_NAME is the name of your Azure AI Foundry project which you can find in the same UI. It is also part of the PROJECT_ENDPOINT at the end of the URL (i.e. https://your-resource-name.services.ai.azure.com/api/projects/< project name >).
 

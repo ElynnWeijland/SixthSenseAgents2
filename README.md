@@ -35,6 +35,7 @@ Agent Creation:
 - [Create AI Agents using Jupyter Notebooks](src/samples/create-agent-using-notebook/lab-create-ai-agent-using-notebook.ipynb)
 - [Create RAG Agents using Jupyter Notebooks](src/samples/create-rag-agent-using-notebook/lab-create-rag-agent-using-notebook.ipynb)
 - [Create Multi-Agent Systems using Jupyter Notebooks](src/samples/create-multi-agent-system-using-notebook/lab-create-multi-agent-system-using-notebook.ipynb)
+- [Create Agents with the Bing Grounding Tool](src/samples/create-a-bing-grounding-connection/lab-create-a-bing-grounding-connection.md)
 
 Deep Research Tool:
 - [Create Agents with the Deep Research Tool](src/samples/create-deep-research-tool/lab-how-to-use-the-deep-research-tool.md)
