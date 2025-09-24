@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "3165507911055685792"
+      "templateHash": "7922274830118515537"
     }
   },
   "parameters": {
@@ -492,9 +492,6 @@
           "bingGroundingSearchDescription": {
             "value": "[format('Grounding with Bing Search resource for AI agents in {0}', parameters('aiFoundryFriendlyName'))]"
           },
-          "location": {
-            "value": "[parameters('location')]"
-          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -506,16 +503,10 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "7445087298941204773"
+              "templateHash": "1449829911872218206"
             }
           },
           "parameters": {
-            "location": {
-              "type": "string",
-              "metadata": {
-                "description": "Azure region of the deployment"
-              }
-            },
             "tags": {
               "type": "object",
               "metadata": {
@@ -576,7 +567,7 @@
               "type": "Microsoft.Bing/accounts",
               "apiVersion": "2025-05-01-preview",
               "name": "[parameters('bingGroundingSearchName')]",
-              "location": "[parameters('location')]",
+              "location": "global",
               "tags": "[union(parameters('tags'), createObject('displayName', parameters('bingGroundingSearchFriendlyName'), 'description', parameters('bingGroundingSearchDescription')))]",
               "kind": "BingGroundingSearch",
               "identity": {

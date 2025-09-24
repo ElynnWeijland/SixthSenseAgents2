@@ -62,7 +62,6 @@ module bingGroundingSearch 'modules/bing-grounding-search.bicep' = if (deployBin
     bingGroundingSearchName: 'bgs-${name}-${uniqueSuffix}'
     bingGroundingSearchFriendlyName: 'Grounding with Bing Search for ${aiFoundryFriendlyName}'
     bingGroundingSearchDescription: 'Grounding with Bing Search resource for AI agents in ${aiFoundryFriendlyName}'
-    location: location
     tags: tags
   }
 }

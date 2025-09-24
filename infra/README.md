@@ -22,6 +22,7 @@ The template includes a Grounding with Bing Search resource that allows your AI 
 - Follow Microsoft's Use and Display Requirements for Bing content
 
 **Important Notes:**
+- Grounding with Bing Search resource is deployed to the 'global' location (not region-specific)
 - Usage of Grounding with Bing Search may incur additional costs
 - By deploying this resource, you agree to Microsoft's Bing API terms of use
 - Data may be transferred outside Azure compliance boundary as per Bing terms

@@ -1,8 +1,5 @@
 // Creates a Grounding with Bing Search resource for Azure AI Foundry agents
 
-@description('Azure region of the deployment')
-param location string
-
 @description('Tags to add to the resources')
 param tags object
 
@@ -28,7 +25,7 @@ param disableLocalAuth bool = false
 
 resource bingGroundingSearch 'Microsoft.Bing/accounts@2025-05-01-preview' = {
   name: bingGroundingSearchName
-  location: location
+  location: 'global'
   tags: union(tags, {
     displayName: bingGroundingSearchFriendlyName
     description: bingGroundingSearchDescription
