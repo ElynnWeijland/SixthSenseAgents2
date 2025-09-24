@@ -7,10 +7,11 @@ This folder contains all the deployment templates and scripts needed to set up a
 
 This template deploys the following resources:
 
-- **Azure AI Foundry Hub**: The main AI resource that serves as the workspace
-- **Azure AI Project**: A project within the hub for organizing AI assets
-- **Azure OpenAI GPT-4o deployment**: Language model deployment for AI agents
+- **Azure AI Foundry Resource**: The main AI resource that serves as the workspace
+- **Azure AI Project**: A project within the foundry for organizing AI assets
+- **Azure OpenAI GPT-4.1 deployment**: Language model deployment for AI agents
 - **Supporting resources**: Storage, Key Vault, Container Registry, Application Insights
+- **03-Deep-Research**: Advanced research configuration for AI experimentation
 
 > **IMPORTANT**  
 > Before using this setup, please check with your instructor if environments need to be deployed as part of the workshop. For the Knights of the Prompts hackathon, all the team environments will be deployed by the instructor.
