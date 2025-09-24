@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.24.24.22086",
-      "templateHash": "5567074093211835374"
+      "templateHash": "16786512990971307699"
     }
   },
   "parameters": {
@@ -345,7 +345,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.24.24.22086",
-              "templateHash": "10237556161373225219"
+              "templateHash": "11390303303971370668"
             }
           },
           "parameters": {
@@ -419,7 +419,7 @@
           "resources": [
             {
               "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2024-10-01",
+              "apiVersion": "2025-06-01",
               "name": "[parameters('aiFoundryName')]",
               "location": "[parameters('location')]",
               "tags": "[union(parameters('tags'), createObject('displayName', parameters('aiFoundryFriendlyName'), 'description', parameters('aiFoundryDescription')))]",
@@ -434,6 +434,7 @@
                 "customSubDomainName": "[if(not(empty(parameters('customSubDomainName'))), parameters('customSubDomainName'), parameters('aiFoundryName'))]",
                 "publicNetworkAccess": "[parameters('publicNetworkAccess')]",
                 "disableLocalAuth": "[parameters('disableLocalAuth')]",
+                "allowProjectManagement": true,
                 "apiProperties": {},
                 "networkAcls": {
                   "defaultAction": "Allow",
@@ -454,11 +455,11 @@
             },
             "aiFoundryEndpoint": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiFoundryName')), '2024-10-01').endpoint]"
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiFoundryName')), '2025-06-01').endpoint]"
             },
             "aiFoundryPrincipalId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiFoundryName')), '2024-10-01', 'full').identity.principalId]"
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiFoundryName')), '2025-06-01', 'full').identity.principalId]"
             }
           }
         }
