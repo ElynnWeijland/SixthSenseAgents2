@@ -1,4 +1,6 @@
-![alt text](../../../media/image-bing6.png)
+<div align="center">
+    <img src="../../../media/image-bing6.png" width="100%" alt="Azure AI Foundry workshop / lab / sample">
+</div>
 
 ## Connect Bing Grounding to your project
 
