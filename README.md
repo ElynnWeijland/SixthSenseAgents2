@@ -1,4 +1,4 @@
-<div width="100%" align="center">
+<div style="width: 100%;">
 ![🤖](media/image-1.png)
 </div>
 
@@ -11,7 +11,7 @@ Dive into the world of intelligent conversational agents with Azure AI Foundry &
 
 ## 💡 The Use Case for This Lab
 
-<div align="right" style="padding: 10px;">
+<div align="right" style="padding: 10px; width: 150px;">
     <img src="media/image-2.png" alt="📊" height="150px">
 </div>
 
