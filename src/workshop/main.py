@@ -1,24 +1,22 @@
-
-# TODO: Test new project endpoint connection method. Change project client and test !!!
-
 import asyncio
 from datetime import date
 import logging
 import os
 
-from azure.ai.projects.aio import AIProjectClient
-from azure.ai.projects.models import (
+from azure.ai.projects import AIProjectClient
+from azure.ai.agents import AgentsClient
+from azure.ai.agents.models import (
     Agent,
     AgentThread,
     AsyncFunctionTool,
     AsyncToolSet,
     CodeInterpreterTool,
     FileSearchTool,
+    MessageRole,
 )
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from sales_data import SalesData
-from stream_event_handler import StreamEventHandler
 from terminal_colors import TerminalColors as tc
 from utilities import Utilities
 
@@ -28,7 +26,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 TENTS_DATA_SHEET_FILE = "datasheet/contoso-tents-datasheet.pdf"
-API_DEPLOYMENT_NAME = os.getenv("AGENT_MODEL_DEPLOYMENT_NAME")
+API_DEPLOYMENT_NAME = os.getenv("MODEL_DEPLOYMENT_NAME")
 PROJECT_ENDPOINT = os.environ["PROJECT_ENDPOINT"]
 AZURE_SUBSCRIPTION_ID = os.environ["AZURE_SUBSCRIPTION_ID"]
 AZURE_RESOURCE_GROUP_NAME = os.environ["AZURE_RESOURCE_GROUP_NAME"]
@@ -43,13 +41,34 @@ toolset = AsyncToolSet()
 sales_data = SalesData()
 utilities = Utilities()
 
-project_client = AIProjectClient(
-    endpoint=PROJECT_ENDPOINT,
-    credential=DefaultAzureCredential(),
-    subscription_id=AZURE_SUBSCRIPTION_ID,
-    resource_group_name=AZURE_RESOURCE_GROUP_NAME,
-    project_name=AZURE_PROJECT_NAME,
-)
+# Project client initialization (outside the context manager for global access)
+# Try different client initialization approaches
+try:
+    # Method 1: Full endpoint approach
+    if "/api/projects/" in PROJECT_ENDPOINT:
+        project_client = AIProjectClient(
+            endpoint=PROJECT_ENDPOINT,
+            credential=DefaultAzureCredential(),
+        )
+        print(f"Using full project endpoint: {PROJECT_ENDPOINT}")
+    else:
+        # Method 2: Base endpoint approach
+        project_client = AIProjectClient(
+            endpoint=PROJECT_ENDPOINT,
+            credential=DefaultAzureCredential(),
+            subscription_id=AZURE_SUBSCRIPTION_ID,
+            resource_group_name=AZURE_RESOURCE_GROUP_NAME,
+            project_name=AZURE_PROJECT_NAME,
+        )
+        print(f"Using base endpoint with project details: {PROJECT_ENDPOINT}")
+except Exception as e:
+    print(f"Error creating project client: {e}")
+    # Fallback: try with just endpoint
+    project_client = AIProjectClient(
+        endpoint=PROJECT_ENDPOINT,
+        credential=DefaultAzureCredential(),
+    )
+    print("Using fallback client configuration")
 
 functions = AsyncFunctionTool(
     {
@@ -57,35 +76,44 @@ functions = AsyncFunctionTool(
     }
 )
 
-# INSTRUCTIONS_FILE = "instructions/instructions_function_calling.txt"
-# INSTRUCTIONS_FILE = "instructions/instructions_code_interpreter.txt"
-# INSTRUCTIONS_FILE = "instructions/instructions_file_search.txt"
+INSTRUCTIONS_FILE = "instructions/instructions_function_calling.txt"
+INSTRUCTIONS_FILE = "instructions/instructions_code_interpreter.txt"
+INSTRUCTIONS_FILE = "instructions/instructions_file_search.txt"
 
 
 async def add_agent_tools():
     """Add tools for the agent."""
 
     # Add the functions tool
-    # toolset.add(functions)
+    toolset.add(functions)
 
     # Add the code interpreter tool
-    # code_interpreter = CodeInterpreterTool()
-    # toolset.add(code_interpreter)
+    code_interpreter = CodeInterpreterTool()
+    toolset.add(code_interpreter)
 
-    # Add the tents data sheet to a new vector data store
-    # vector_store = await utilities.create_vector_store(
-    #     project_client,
-    #     files=[TENTS_DATA_SHEET_FILE],
-    #     vector_name_name="Contoso Product Information Vector Store",
-    # )
-    # file_search_tool = FileSearchTool(vector_store_ids=[vector_store.id])
-    # toolset.add(file_search_tool)
+    # Skip file search tool for now to avoid HTTP transport issues
+    print("Skipping file search tool to avoid transport issues...")
+    
+    # # Add the tents data sheet to a new vector data store
+    # try:
+    #     print("Creating vector store for file search...")
+    #     vector_store = utilities.create_vector_store(
+    #         project_client,
+    #         files=[TENTS_DATA_SHEET_FILE],
+    #         vector_name_name="Contoso Product Information Vector Store",
+    #     )
+    #     file_search_tool = FileSearchTool(vector_store_ids=[vector_store.id])
+    #     toolset.add(file_search_tool)
+    #     print(f"File search tool added with vector store: {vector_store.id}")
+    # except Exception as e:
+    #     print(f"Error creating file search tool: {e}")
+    #     print("Continuing without file search capability...")
 
 
 async def initialize() -> tuple[Agent, AgentThread]:
     """Initialize the agent with the sales data schema and instructions."""
-
-    await add_agent_tools()
+    agent = None
+    thread = None
 
     await sales_data.connect()
     database_schema_string = await sales_data.get_database_info()
@@ -101,8 +129,12 @@ async def initialize() -> tuple[Agent, AgentThread]:
         instructions = instructions.replace("{database_schema_string}", database_schema_string)
         instructions = instructions.replace("{current_date}", date.today().strftime("%Y-%m-%d"))
 
+        # Add agent tools (this must be done inside the context manager)
+        await add_agent_tools()
+
+        # Create agent and thread without closing the context manager
         print("Creating agent...")
-        agent = await project_client.agents.create_agent(
+        agent = project_client.agents.create_agent(
             model=API_DEPLOYMENT_NAME,
             name="Contoso Sales AI Agent",
             instructions=instructions,
@@ -112,8 +144,9 @@ async def initialize() -> tuple[Agent, AgentThread]:
         )
         print(f"Created agent, ID: {agent.id}")
 
+        # Create thread
         print("Creating thread...")
-        thread = await project_client.agents.create_thread()
+        thread = project_client.agents.threads.create()
         print(f"Created thread, ID: {thread.id}")
 
         return agent, thread
@@ -121,39 +154,117 @@ async def initialize() -> tuple[Agent, AgentThread]:
     except Exception as e:
         logger.error("An error occurred initializing the agent: %s", str(e))
         logger.error("Please ensure you've enabled an instructions file.")
+        raise
 
 
 async def cleanup(agent: Agent, thread: AgentThread) -> None:
     """Cleanup the resources."""
-    await project_client.agents.delete_thread(thread.id)
-    await project_client.agents.delete_agent(agent.id)
+    try:
+        project_client.agents.delete_agent(agent.id)
+        print(f"Deleted agent: {agent.id}")
+    except Exception as e:
+        print(f"Error deleting agent: {e}")
+    
     await sales_data.close()
 
 
 async def post_message(thread_id: str, content: str, agent: Agent, thread: AgentThread) -> None:
     """Post a message to the Azure AI Agent Service."""
     try:
-        await project_client.agents.create_message(
+        print(f"Creating message in thread {thread_id}...")
+        
+        # Create message using project_client directly
+        message = project_client.agents.messages.create(
             thread_id=thread_id,
             role="user",
             content=content,
         )
+        print(f"Message created: {message.id}")
 
-        stream = await project_client.agents.create_stream(
+        print(f"Creating run for agent {agent.id}...")
+        # Create and poll run
+        run = project_client.agents.runs.create(
             thread_id=thread.id,
-            assistant_id=agent.id,
-            event_handler=StreamEventHandler(functions=functions, project_client=project_client, utilities=utilities),
-            max_completion_tokens=MAX_COMPLETION_TOKENS,
-            max_prompt_tokens=MAX_PROMPT_TOKENS,
-            temperature=TEMPERATURE,
-            top_p=TOP_P,
-            instructions=agent.instructions,
+            agent_id=agent.id,
         )
+        print(f"Run created: {run.id}")
+        
+        # Enhanced polling with action handling
+        import time
+        max_iterations = 120  # Max 2 minutes
+        iteration = 0
+        
+        while run.status in ("queued", "in_progress", "requires_action") and iteration < max_iterations:
+            time.sleep(2)  # Increased sleep time
+            iteration += 1
+            
+            try:
+                run = project_client.agents.runs.get(thread_id=thread.id, run_id=run.id)
+                print(f"Run status: {run.status} (iteration {iteration})")
+            except Exception as e:
+                print(f"Error getting run status: {e}")
+                time.sleep(5)  # Wait longer on error
+                continue
+            
+            # Handle required actions (function calls)
+            if run.status == "requires_action" and run.required_action:
+                print("Run requires action - handling function calls...")
+                
+                tool_outputs = []
+                try:
+                    for tool_call in run.required_action.submit_tool_outputs.tool_calls:
+                        print(f"Executing function: {tool_call.function.name}")
+                        
+                        # Execute the function call
+                        if tool_call.function.name == "async_fetch_sales_data_using_sqlite_query":
+                            import json
+                            args = json.loads(tool_call.function.arguments)
+                            result = await sales_data.async_fetch_sales_data_using_sqlite_query(args["sqlite_query"])
+                            tool_outputs.append({
+                                "tool_call_id": tool_call.id,
+                                "output": result
+                            })
+                    
+                    # Submit the tool outputs
+                    if tool_outputs:
+                        print("Submitting tool outputs...")
+                        run = project_client.agents.runs.submit_tool_outputs(
+                            thread_id=thread.id,
+                            run_id=run.id,
+                            tool_outputs=tool_outputs
+                        )
+                        print("Tool outputs submitted successfully")
+                except Exception as e:
+                    print(f"Error handling tool outputs: {e}")
+                    break
+        
+        if iteration >= max_iterations:
+            print("Run timed out after maximum iterations")
+            return
+            
+        print(f"Run finished with status: {run.status}")
+        
+        if run.status == "failed":
+            print(f"Run failed: {run.last_error}")
+        elif run.status == "completed":
+            # Get the last message from the agent
+            try:
+                response = project_client.agents.messages.get_last_message_by_role(
+                    thread_id=thread_id,
+                    role=MessageRole.AGENT,
+                )
+                if response:
+                    print("\nAgent response:")
+                    print("\n".join(t.text.value for t in response.text_messages))
+                else:
+                    print("No response message found")
+            except Exception as e:
+                print(f"Error getting response message: {e}")
 
-        async with stream as s:
-            await s.until_done()
     except Exception as e:
-        utilities.log_msg_purple(f"An error occurred posting the message: {str(e)}")
+        print(f"An error occurred posting the message: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 async def main() -> None:
@@ -161,19 +272,21 @@ async def main() -> None:
     Main function to run the agent.
     Example questions: Sales by region, top-selling products, total shipping costs by region, show as a pie chart.
     """
-    agent, thread = await initialize()
+    # Use the project client within a context manager for the entire session
+    with project_client:
+        agent, thread = await initialize()
 
-    while True:
-        # Get user input prompt in the terminal using a pretty shade of green
-        print("\n")
-        prompt = input(f"{tc.GREEN}Enter your query (type exit to finish): {tc.RESET}")
-        if prompt.lower() == "exit":
-            break
-        if not prompt:
-            continue
-        await post_message(agent=agent, thread_id=thread.id, content=prompt, thread=thread)
+        while True:
+            # Get user input prompt in the terminal using a pretty shade of green
+            print("\n")
+            prompt = input(f"{tc.GREEN}Enter your query (type exit to finish): {tc.RESET}")
+            if prompt.lower() == "exit":
+                break
+            if not prompt:
+                continue
+            await post_message(agent=agent, thread_id=thread.id, content=prompt, thread=thread)
 
-    await cleanup(agent, thread)
+        await cleanup(agent, thread)
 
 
 if __name__ == "__main__":

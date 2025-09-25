@@ -1,7 +1,9 @@
 from typing import Any
 
-from azure.ai.projects.aio import AIProjectClient
-from azure.ai.projects.models import (
+# Correcte import voor AIProjectClient
+from azure.ai.projects import AIProjectClient
+
+from azure.ai.agents.models import (
     AsyncAgentEventHandler,
     AsyncFunctionTool,
     MessageDeltaChunk,
@@ -36,7 +38,7 @@ class StreamEventHandler(AsyncAgentEventHandler[str]):
         #     print()
         # self.util.log_msg_purple(f"ThreadMessage created. ID: {message.id}, " f"Status: {message.status}")
 
-        await self.util.get_files(message, self.project_client)
+        self.util.get_files(message, self.project_client)
 
     async def on_thread_run(self, run: ThreadRun) -> None:
         """Handle thread run events"""
