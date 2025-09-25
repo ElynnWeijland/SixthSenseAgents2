@@ -100,5 +100,18 @@ The following conversation uses data from both the Contoso sales database and th
 
 When you're done, type **exit**, or press <kbd>Shift</kbd>+<kbd>F5</kbd> to stop the agent app.
 
+## Optional: Create a Simple Web UI using Github Copilot Agent mode (vibe code)
+Optionally, you can vibe code yourself a nice looking UI using the following prompt (make sure that Github Copilot is set to "Agent mode"):
+
+```prompt
+Create a nice looking UI using Fluent for this agentic app. The app should have a text input box for the user to enter their query, a submit button, and a display area for the agent's responses. Use Python and any necessary libraries to build the UI. Ensure the UI is user-friendly and visually appealing.
+``` 
+
+> NOTE: You may need to tweak the generated code a bit to get it working. Please understand that vibe coding is usable for prototyping, but you should always review and test the generated code when building production applications.
+
+After some waiting and tweaking, you should have a nice looking UI. In our case it looked like this:
+
+![alt text](media/ui.png)
+
 ## Next
 Proceed to the next step: [Summary and Next Steps](summary.md)
