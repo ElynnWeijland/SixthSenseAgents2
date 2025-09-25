@@ -10,9 +10,11 @@ Dive into the world of intelligent conversational agents with Azure AI Foundry &
 🕒 45 - 60 minutes
 
 ## 💡 The Use Case for This Lab
-<div style="align: right; padding: 10px;">
+
+<div align="right" style="padding: 10px;">
     <img src="media/image-2.png" alt="📊" height="150px">
 </div>
+
 Imagine you are a sales manager at Contoso, a multinational retail company that sells outdoor equipment. 🏕️ You need to analyze sales data to find trends, understand customer preferences, and make informed business decisions. To help you, Contoso has developed a conversational agent that can answer questions about your sales data. 💬📈
 
 ## 🎯 What You Will Learn
