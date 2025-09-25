@@ -1,5 +1,6 @@
-
+<div width="100%" align="center">
 ![🤖](media/image-1.png)
+</div>
 
 # **Welcome to the "Build Agents with Azure AI Foundry" workshop repo!** 🎉
 
