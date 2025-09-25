@@ -1,6 +1,4 @@
-<div align="center">
-    <img src="../../../media/image-vibe1.png" width="100%" alt="Azure AI Foundry workshop / lab / sample">
-</div>
+![alt text](../../../media/image-vibe1.png)
 
 ## Introduction to vibe coding
 Did you promise to build a mockup interface for your customer but you don't know how to code? No worries, with Vibe Coding you can create a user interface for your agents in no time. This sample will guide you through the process of creating a simple user interface using Vibe Coding.
