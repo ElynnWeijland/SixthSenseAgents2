@@ -51,6 +51,8 @@ Copy/paste both the endpoint and API key in the Talking Avatar Chat Demo page:
 
 Make sure the Deployment Name is set to `gpt41` or at whatever you named the deployment of the Azure OpenAI model.
 
+Leave all the other settings as is. Off course you can change those later if you want. 
+
 Now open a new session by clicking on **Open Avatar Session** button. You should see the avatar appear on the page:
 
 ![alt text](../../../../media/image-avatar8.png)
@@ -64,8 +66,7 @@ If you want to create a nice looking UI for your Avatar demo, you can use vibe c
 Create a nice modern looking UI based on the Fluent theme pack of Microsoft.
 ```
 
-In our case Github Copilot created a seperate workspace and downloaded the Fluent UI theme pack. It then created a nice looking UI for the Avatar demo. Below a screenshot of the result:
+In our case Github Copilot created a seperate workspace and downloaded the Fluent UI theme pack. After a few simple iterations it created a nice looking UI for the Avatar demo. Below a screenshot of the result:
+![alt text](../../../../media/image-avatar11.png)
 
-<screen shot here>
-
-Do you realize how simple it was to create a nice looking UI for the Avatar demo? You can now use this UI for your own Avatar demos. Enjoy!
+Do you realize how simple it is to create a nice looking UI for the Avatar demo? You can now use this UI for your own Avatar demos. Enjoy!
