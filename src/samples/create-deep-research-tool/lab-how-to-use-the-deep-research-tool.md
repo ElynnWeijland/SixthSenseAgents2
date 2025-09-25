@@ -1,4 +1,6 @@
-![alt text](../../../media/image-deepresearch1.png)
+<div align="center">
+    <img src="../../../media/image-deepresearch1.png" width="100%" alt="Azure AI Foundry workshop / lab / sample">
+</div>
 
 # Deep Research Introduction
 Before diving into the Deep Research tool, it's important to understand its capabilities, prerequisites, and how to effectively utilize it within your Azure AI Foundry projects. 

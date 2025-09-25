@@ -1,4 +1,6 @@
-![alt text](../../../media/image-deepresearch7.png)
+<div align="center">
+    <img src="../../../media/image-deepresearch7.png" width="100%" alt="Azure AI Foundry workshop / lab / sample">
+</div>
 
 ## Debugging the Deep Research Tool
 In this sample we will show you how to debug issues when using the Deep Research Tool in your AI Agent. By adding some print statements to your code you can get insights into what is happening when the agent is using the Deep Research Tool. 
