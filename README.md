@@ -45,7 +45,7 @@ Deep Research Tool:
 - [Debugging sample for the Deep Research Tool](src/samples/create-deep-research-tool/lab-deep-research-tool-debugging-sample.md)
 
 Agent Orchestration:
-
+- [Create Agents using Semantic Kernel](src/samples/create-semantic-kernel-agents-using-azure-ai-agent-service/lab-create-semantic-kernel-agents-using-azure-ai-agent-service.md)
 
 Sovereign AI using Foundry Local:
 - [Setup Foundry Local to go Sovereign](src/samples/create-sovereign-agents-using-foundry-local/lab-get-started-with-foundry-local.md)
