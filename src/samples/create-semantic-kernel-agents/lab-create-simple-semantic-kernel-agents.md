@@ -323,6 +323,8 @@ After some iterations you should get something like this:
 
 ![alt text](../../../media/image-sk2.png)
 
+If you run into issues, just ask Copilot to fix the issues. Copy and paste any error messages you get to Copilot.
+
 ## Additional Resources
 
 1. 🔌 Explore over 100 [Detailed Samples](https://learn.microsoft.com/en-us/semantic-kernel/get-started/detailed-samples)
