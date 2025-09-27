@@ -9,8 +9,6 @@ Semantic Kernel is a model-agnostic SDK that empowers developers to build, orche
 ## System Requirements
 
 - **Python**: 3.10+
-- **.NET**: .NET 8.0+ 
-- **Java**: JDK 17+
 - **OS Support**: Windows, macOS, Linux
 
 ## Key Features
@@ -296,6 +294,17 @@ Agent:> I'm sorry to hear you were charged twice for your subscription last mont
 Once I have this information, I can look into your account and help process a refund for any duplicate charge. This request will be handled by the BillingAgent.
 User:>
 ```
+
+# Optional: Build an UI using vibe coding
+Make sure Github Copilot is set to Agent mode and add the python script is added as context. 
+
+```prompt
+Build a nice interface that looks like a customer support page of a campsite ecommerce store. The interface should be based on Fluent UI. 
+```
+
+After some iterations you should get something like this:
+
+![alt text](../../../media/image-sk2.png)
 
 ## Additional Resources
 
