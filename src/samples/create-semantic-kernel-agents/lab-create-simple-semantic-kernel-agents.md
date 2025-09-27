@@ -78,6 +78,12 @@ async def main():
 # Run the main function using asyncio (for asynchronous code)
 asyncio.run(main()) 
 ```
+Run the script:
+
+```bash
+python simple_agent.py
+```
+
 The output will be something like this:
 ```prompt
 Language's essence,
@@ -157,6 +163,12 @@ async def main():
 
 # Run the main function when script is executed directly
 asyncio.run(main()) 
+```
+
+Run the script:
+
+```bash
+python agent_with_plugins.py
 ```
 
 The output will be something like this:
@@ -261,6 +273,11 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+Run the script:
+
+```bash
+python multi_agent_system.py
+``` 
 
 In the terminal, you can start asking questions about billing or refunds. For example:
 
