@@ -56,4 +56,5 @@ Build User Interfaces:
 - [Create a Talking Avatar website using Azure Text-to-Speech Avatar Real-Time API](src/samples/create-a-talking-avatar/avatar/README.md)
 
 MCP Integration:
-- [Create AI Foundry Agents connected to MCP Servers](src/samples/create-mcp-foundry-agents/README.md)
+- [Create AI Foundry Agents connected to MCP Servers](src/samples/create-mcp-foundry-agents/lab-create-agent-that-uses-mcp-server.md)
+- <TODO> Create MCP Server....
