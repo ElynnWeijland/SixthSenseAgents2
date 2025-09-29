@@ -63,9 +63,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Azure AI configuration
-PROJECT_ENDPOINT = os.getenv('AZURE_AI_PROJECT_ENDPOINT')
-PROJECT_NAME = os.getenv('AZURE_AI_PROJECT_NAME')
-MODEL_DEPLOYMENT = os.getenv('MODEL_DEPLOYMENT', 'gpt-4o')
+PROJECT_ENDPOINT = os.getenv('PROJECT_ENDPOINT')
+PROJECT_NAME = os.getenv('AZURE_PROJECT_NAME')
+MODEL_DEPLOYMENT = os.getenv('AGENT_MODEL_DEPLOYMENT_NAME', 'gpt41')
 
 # Models
 class ChatRequest(BaseModel):
@@ -99,7 +99,7 @@ async def chat_with_mcp_agent(chat_request: ChatRequest):
     if not PROJECT_ENDPOINT or not MODEL_DEPLOYMENT:
         raise HTTPException(
             status_code=503,
-            detail="Azure AI not configured. Please set AZURE_AI_PROJECT_ENDPOINT and MODEL_DEPLOYMENT environment variables."
+            detail="Azure AI not configured. Please set PROJECT_ENDPOINT and AGENT_MODEL_DEPLOYMENT_NAME environment variables."
         )
     
     try:
@@ -149,8 +149,7 @@ async def chat_with_mcp_agent(chat_request: ChatRequest):
             # Create and process agent run with MCP tools
             run = agents_client.runs.create_and_process(
                 thread_id=thread.id,
-                agent_id=agent.id,
-                tool_resources=mcp_tool.resources
+                agent_id=agent.id
             )
             logger.info(f"Created run, ID: {run.id}, Status: {run.status}")
             

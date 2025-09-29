@@ -48,16 +48,7 @@ Common examples that work:
 
 ⚠️ **Important**: Local development requires Azure AI Foundry resources to be already deployed and environment variables configured. For the easiest setup, deploy directly to Azure using the instructions below.
 
-1. **Clone and setup:**
-   ```bash
-   git clone <your-repo-url>
-   cd python-mcp-agent-chat
-   python -m venv .venv
-   .venv\Scripts\activate  # Windows (.venv/bin/activate on Linux/Mac)
-   pip install -r requirements.txt
-   ```
-
-2. **Configure environment variables (optional - only needed for local development if you want to run the app locally):**
+1. **Configure environment variables (optional - only needed for local development if you want to run the app locally):**
    Create a `.env` file or set these environment variables:
    ```
    AZURE_AI_PROJECT_ENDPOINT=https://your-ai-project.westus.ai.azure.com/api/projects/your-project
@@ -66,52 +57,48 @@ Common examples that work:
    ```
    > These values are available in your Azure AI Foundry project after deployment
 
-3. **Set up Azure credentials:**
+2. **Set up Azure credentials:**
    ```bash
-   az login
+   az login --use-device-code
    ```
    Ensure you're logged into the same Azure account that has access to your AI Foundry resources.
 
-4. **Run locally:**
+3. **Run locally:**
    ```bash
    python main.py
    ```
    Visit http://localhost:8000 to access the application.
 
-**💡 Recommended**: Deploy to Azure first using `azd up` below, then optionally set up local development afterward.
+You should see a simple interface to connect to a remote MCP server and chat with the AI agent:
 
-### Azure Deployment
+![alt text](../../../media/image-mcp2.png.png)
 
-Login to the Azure Developer CLI (azd):
 
-```bash
-azd auth login
-```
-
-Deploy using Azure Developer CLI (azd):
-
-```bash
-azd up
-```
-
-This will:
-- Deploy the FastAPI application to Azure App Service
-- Set up Azure AI Foundry integration  
-- Configure managed identity for secure authentication
-
-The deployed application will be accessible at the URL provided after deployment.
-
-## How It Works
+## Using the MCP Agent Application
 
 The application provides a simple interface to:
 
-1. **Connect to MCP Servers**: Enter the URL of a remote MCP server  
-2. **Chat with AI Agent**: The AI agent can use tools from the connected MCP server
+1. **Connect to MCP Servers**: Enter the URL of a remote MCP server, for instance: https://learn.microsoft.com/ai/mcp
+2. **Chat with AI Agent**: The AI agent can use tools from the connected MCP server, you can ask questions like:
+   - "What do you know about Model Context Protocol?"
+   - "What categories of knowledge do you have?"
 3. **Rich Responses**: AI responses are formatted with markdown support and syntax highlighting
 
-### Example Usage
+See the screenshot below for an example interaction:
 
-1. Visit the application homepage
-2. Enter a remote MCP server URL (e.g., `https://your-mcp-server.com/mcp`)
-3. Start chatting with the AI agent
-4. The agent can use tools from the MCP server to help answer your questions
+![alt text](../../../media/image-mcp3.png)
+
+## Optional: Deploy to Azure (not tested)
+Login to the Azure Developer CLI (azd):
+
+azd auth login
+Deploy using Azure Developer CLI (azd):
+
+azd up
+This will:
+
+- Deploy the FastAPI application to Azure App Service
+- Set up Azure AI Foundry integration
+- Configure managed identity for secure authentication
+- The deployed application will be accessible at the URL provided after deployment.
+
