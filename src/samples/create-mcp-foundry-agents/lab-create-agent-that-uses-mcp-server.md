@@ -132,4 +132,4 @@ This was due to the fact the Azure Container Apps needs permissions on the Azure
 
 After the deployment of the Azure Container App resources we were able to access the app in the browser:
 
-
+#TODO: finish this section
