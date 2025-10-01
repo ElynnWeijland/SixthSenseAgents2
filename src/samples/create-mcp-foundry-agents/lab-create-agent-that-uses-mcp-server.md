@@ -102,3 +102,34 @@ This will:
 - Configure managed identity for secure authentication
 - The deployed application will be accessible at the URL provided after deployment.
 
+## Optional (2): Use Github Copilot Agent mode to deploy the app to Azure
+
+Using Github Copilot Agent mode, you can deploy this app to Azure Container Apps using Flask. Make sure to point to the pre-deployed Azure Container Registry: <your ACR resource name>.azurecr.io
+
+```prompt
+i want to deploy this app to azure container apps using flask. make sure to use this registry: <your ACR resource name>.azurecr.io
+```
+
+In our example it created dockerfile, changed the Python code to use Flask, created a requirements.txt file, and created the necessary deployment templates and files to deploy to Azure Container Apps. See the screenshot below:
+
+![alt text](../../../media/image-mcp4.png)
+
+You might need to iterate a few times to get everything right, but in the end you should be able to deploy the app to Azure Container Apps. In our case we had to add the IP address to the Firewall whitelist of the Azure Container Registry:
+
+![alt text](../../../media/image-mcp5.png)
+
+After that the deployment got further:
+
+![alt text](../../../media/image-mcp6.png)
+
+At the Container App deployment we ran into another error:
+
+![alt text](../../../media/image-mcp7.png)
+
+This was due to the fact the Azure Container Apps needs permissions on the Azure Container Registry. We used Github Copilot Agent mode to fix this: 
+
+![alt text](../../../media/image-mcp8.png)
+
+After the deployment of the Azure Container App resources we were able to access the app in the browser:
+
+
