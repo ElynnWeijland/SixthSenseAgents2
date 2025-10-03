@@ -43,6 +43,14 @@ By the end of this workshop, you will:
 - 🔍 Explore its tools.
 - 📜 Effectively use instructions to guide the LLM.
 
+After the basic workshop we will guide you to continue enhancing your agent with more advanced features, such as:
+- 🚀 Expand the agent's capabilities beyond basic conversational tasks.
+- 🧠 Integrate advanced AI features such as reasoning, planning, and decision-making.
+- 🔗 Connect the agent to external APIs and data sources for enriched functionality.
+- 📊 Enable the agent to generate visualizations and actionable insights from datasets.
+- 🤝 Incorporate multi-agent collaboration to solve intricate business challenges.
+- 🌐 Leverage Azure AI services to scale and enhance the agent's performance.
+
 ## 📖 Workshop Instructions
 
 👉 Start the full workshop here: [Introduction](docs/docs/introduction.md)
