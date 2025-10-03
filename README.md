@@ -75,6 +75,9 @@ Agent Framework:
 - [Create Agents using Semantic Kernel](src/samples/create-semantic-kernel-agents/lab-create-simple-semantic-kernel-agents.md)
 *Create Agents using AutoGen.... (coming soon)*
 
+Autonomous Agents:
+*Create Autonomous Agents....(coming soon)*
+
 Sovereign AI using Foundry Local:
 - [Setup Foundry Local to go Sovereign](src/samples/create-sovereign-agents-using-foundry-local/lab-get-started-with-foundry-local.md)
 - [Use OpenAI SDK with Foundry Local](src/samples/create-sovereign-agents-using-foundry-local/lab-use-openai-sdk-with-foundry-local.md)
