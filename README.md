@@ -5,6 +5,25 @@
 # **Welcome to the "Build Agents with Azure AI Foundry" workshop repo!** 🎉
 
 Dive into the world of intelligent conversational agents with Azure AI Foundry & AI Agent Service, a seamless blend of service and SDK that simplifies the development of robust AI-driven solutions. In this hands-on workshop, you’ll learn to create a powerful agent capable of answering sales-related queries, performing data analysis, generating visualizations, and integrating external data sources to deliver enhanced business insights. 🚀
+## 🌟 **Beyond Chatbots: Unlock the Future of AI Applications** 🌟
+
+> **💡 Think Bigger, Build Smarter!**  
+> Traditional chatbots and Copilots like ChatGPT have revolutionized how we interact with AI. But why stop there? This workshop challenges you to **think beyond chatbots** and explore the next frontier: **Agentic Applications**.
+
+### 🚀 **What Are Agentic Applications?**
+Agentic applications are **AI systems with superpowers**:
+- 🗣️ **Conversational Intelligence**: Engage users naturally.
+- 🤖 **Action-Oriented Capabilities**: Automate workflows and execute meaningful actions.
+- 📊 **Proactive Insights**: Deliver transformative solutions to complex business challenges.
+
+### 🔑 **Why Go Beyond Chatbots?**
+By embracing Agentic applications, you’ll:
+- **Unlock New Possibilities**: Tackle advanced use cases that traditional chatbots can’t handle.
+- **Drive Innovation**: Build solutions tailored to your unique business needs.
+- **Empower Decision-Making**: Enable smarter, faster, and more impactful decisions.
+
+### 🌐 **Your Journey Starts Here**
+This workshop is your gateway to creating **intelligent, action-driven AI solutions**. Let’s redefine what’s possible with Azure AI Foundry and take your AI development to the next level! 💼✨
 
 ### ⏱️ Duration
 🕒 45 - 60 minutes
@@ -44,8 +63,9 @@ Deep Research Tool:
 - [Create Agents with the Deep Research Tool](src/samples/create-deep-research-tool/lab-how-to-use-the-deep-research-tool.md)
 - [Debugging sample for the Deep Research Tool](src/samples/create-deep-research-tool/lab-deep-research-tool-debugging-sample.md)
 
-Agent Orchestration:
+Agent Framework:
 - [Create Agents using Semantic Kernel](src/samples/create-semantic-kernel-agents/lab-create-simple-semantic-kernel-agents.md)
+*Create Agents using AutoGen.... (coming soon)*
 
 Sovereign AI using Foundry Local:
 - [Setup Foundry Local to go Sovereign](src/samples/create-sovereign-agents-using-foundry-local/lab-get-started-with-foundry-local.md)
@@ -53,8 +73,17 @@ Sovereign AI using Foundry Local:
 
 Build User Interfaces:
 - [Create a (mockup) User Interface for Agents using Vibe Coding](src/samples/create-a-user-interface-for-agents/lab-vibe-coding-mockup-ui.md)
-- [Create a Talking Avatar website using Azure Text-to-Speech Avatar Real-Time API](src/samples/create-a-talking-avatar/avatar/README.md)
 
 MCP Integration:
 - [Create AI Foundry Agents connected to MCP Servers](src/samples/create-mcp-foundry-agents/lab-create-agent-that-uses-mcp-server.md)
-- <TODO> Create MCP Server....
+*Create MCP Server....(coming soon)*
+
+Multimodal Agents:
+- [Create a Talking Avatar website using Azure Text-to-Speech Avatar Real-Time API](src/samples/create-a-talking-avatar/avatar/README.md)
+- Create Multimodal Agents....(coming soon)
+- Create Agents with Vision Tool....(coming soon)
+- Create Agents with Speech Tool....(coming soon)
+
+Integration with Business Applications:
+- Create Agents with SAP Connector....(coming soon)
+- Create Agents with Salesforce Connector....(coming soon)
