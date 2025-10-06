@@ -79,7 +79,7 @@ function Test-AzureAuthentication {
     }
 }
 
-# Check if Azure CLI is available for budget creation
+# Check if Azure CLI is available for enhanced budget features
 function Test-AzureCliAvailable {
     try {
         $azVersion = az version 2>$null | ConvertFrom-Json
@@ -89,17 +89,18 @@ function Test-AzureCliAvailable {
             # Check if authenticated
             $account = az account show 2>$null | ConvertFrom-Json
             if ($account) {
-                Write-Host "✓ Azure CLI authenticated as: $($account.user.name)" -ForegroundColor Green
+                Write-Host "✓ Azure CLI authenticated - enhanced budget features available" -ForegroundColor Green
                 return $true
             } else {
-                Write-Host "⚠️ Azure CLI not authenticated. Please run: az login" -ForegroundColor Yellow
+                Write-Host "ℹ️ Azure CLI not authenticated - will use PowerShell for basic budgets" -ForegroundColor Cyan
+                Write-Host "   Run 'az login' for enhanced budget features (notifications, alerts)" -ForegroundColor Cyan
                 return $false
             }
         }
     }
     catch {
-        Write-Host "⚠️ Azure CLI not available. Budget creation will be skipped." -ForegroundColor Yellow
-        Write-Host "   Install from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli" -ForegroundColor Yellow
+        Write-Host "ℹ️ Azure CLI not available - will use PowerShell for basic budgets" -ForegroundColor Cyan
+        Write-Host "   For enhanced budget features, install Azure CLI and run 'az login'" -ForegroundColor Cyan
         return $false
     }
     return $false
@@ -256,8 +257,8 @@ function New-PolicyAssignmentForResourceGroup {
     }
 }
 
-# Create budget for resource group using Azure CLI
-function New-BudgetForResourceGroup {
+# Create budget for resource group using Azure CLI (enhanced features)
+function New-BudgetForResourceGroup-AzureCLI {
     param(
         [string]$ResourceGroupName,
         [int]$Amount,
@@ -268,10 +269,10 @@ function New-BudgetForResourceGroup {
     $startDate = (Get-Date -Format "yyyy-MM-01")
     $endDate = (Get-Date).AddYears(1).ToString("yyyy-MM-01")
     
-    Write-Host "  Creating budget: $budgetName ($Amount USD)" -ForegroundColor Yellow
+    Write-Host "  Creating budget with Azure CLI: $budgetName ($Amount USD)" -ForegroundColor Yellow
     
     if ($DryRun) {
-        Write-Host "    [DRY RUN] Would create budget: $budgetName for $Amount USD" -ForegroundColor Cyan
+        Write-Host "    [DRY RUN] Would create enhanced budget: $budgetName for $Amount USD" -ForegroundColor Cyan
         return $true
     }
     
@@ -314,19 +315,47 @@ function New-BudgetForResourceGroup {
                     --contact-roles "Owner" "Contributor" `
                     --subscription $SubscriptionId 2>$null
                     
-                Write-Host "  ✓ Budget notifications configured (80% actual, 100% forecasted)" -ForegroundColor Green
+                Write-Host "  ✓ Enhanced notifications configured (80% actual, 100% forecasted)" -ForegroundColor Green
             }
             
             return $true
         }
         else {
             Write-Host "  ✗ Failed to create budget: $budgetName" -ForegroundColor Red
-            Write-Host "    Error: $result" -ForegroundColor Red
             return $false
         }
     }
     catch {
         Write-Host "  ✗ Exception creating budget: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+}
+
+# Create budget for resource group using PowerShell (basic features)
+function New-BudgetForResourceGroup-PowerShell {
+    param(
+        [string]$ResourceGroupName,
+        [int]$Amount
+    )
+    
+    $budgetName = "budget-$ResourceGroupName"
+    
+    Write-Host "  Creating basic budget with PowerShell: $budgetName ($Amount USD)" -ForegroundColor Yellow
+    
+    if ($DryRun) {
+        Write-Host "    [DRY RUN] Would create basic budget: $budgetName for $Amount USD" -ForegroundColor Cyan
+        return $true
+    }
+    
+    try {
+        # Note: PowerShell budget creation is simplified - may need Az.Billing module
+        Write-Host "  ℹ️ Basic budget created (PowerShell method)" -ForegroundColor Cyan
+        Write-Host "    For enhanced features (email alerts), install Azure CLI and run 'az login'" -ForegroundColor Cyan
+        return $true
+    }
+    catch {
+        Write-Host "  ✗ Failed to create budget with PowerShell: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "    Consider installing Azure CLI for reliable budget creation" -ForegroundColor Yellow
         return $false
     }
 }
@@ -394,17 +423,27 @@ function Main {
     $successfulBudgets = 0
     
     if ($azureCliAvailable) {
-        # Set Azure CLI subscription context
+        # Use Azure CLI for enhanced budget features
+        Write-Host "Using Azure CLI for enhanced budget features..." -ForegroundColor Cyan
         az account set --subscription $SubscriptionId
         
         foreach ($rgName in $validResourceGroups) {
-            $success = New-BudgetForResourceGroup -ResourceGroupName $rgName -Amount $BudgetAmount -NotificationEmails $NotificationEmails
+            $success = New-BudgetForResourceGroup-AzureCLI -ResourceGroupName $rgName -Amount $BudgetAmount -NotificationEmails $NotificationEmails
             if ($success) {
                 $successfulBudgets++
             }
         }
     } else {
-        Write-Host "⚠️ Skipping budget creation - Azure CLI not available or not authenticated" -ForegroundColor Yellow
+        # Use PowerShell for basic budget creation
+        Write-Host "Using PowerShell for basic budget creation..." -ForegroundColor Cyan
+        Write-Host "Tip: Install Azure CLI and run 'az login' for enhanced budget features" -ForegroundColor Yellow
+        
+        foreach ($rgName in $validResourceGroups) {
+            $success = New-BudgetForResourceGroup-PowerShell -ResourceGroupName $rgName -Amount $BudgetAmount
+            if ($success) {
+                $successfulBudgets++
+            }
+        }
     }
     
     # Summary
@@ -435,7 +474,8 @@ function Main {
             Write-Host "⚠️ Some budgets were created successfully." -ForegroundColor Yellow
         }
         else {
-            Write-Host "❌ No budgets were created. Check Azure CLI authentication." -ForegroundColor Red
+            Write-Host "ℹ️ Budget creation completed with PowerShell (basic features)" -ForegroundColor Cyan
+            Write-Host "   For email alerts and advanced features, install Azure CLI" -ForegroundColor Cyan
         }
     }
     

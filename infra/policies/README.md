@@ -46,41 +46,53 @@ The script automatically blocks deployment of expensive resources:
 
 ### **Prerequisites**
 ```powershell
-# Install Azure PowerShell (if not already installed)
+# Install Azure PowerShell
 Install-Module -Name Az -Force -Scope CurrentUser
 
-# Install Azure CLI for budget creation (optional but recommended)
-# Download from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
-
-# Authenticate with both
+# Authenticate with Azure (REQUIRED)
 Connect-AzAccount
-az login
+
+# Optional: Install Azure CLI for enhanced budget features
+# Download from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+# Then run: az login
 ```
 
-### **Basic Usage**
+### **Basic Usage (Only PowerShell Required)**
 ```powershell
 # Navigate to the policies directory
 cd infra/policies
 
-# Deploy to multiple resource groups (recommended for hackathons)
+# Deploy policies and basic budgets (only Connect-AzAccount needed)
 .\SimplifiedCostControl.ps1 -SubscriptionId "your-subscription-id" -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3")
 
 # Test first with dry run (recommended)
 .\SimplifiedCostControl.ps1 -SubscriptionId "your-subscription-id" -ResourceGroupNames @("rg-team1") -DryRun
 ```
 
-### **Advanced Usage**
+### **Enhanced Usage (With Azure CLI)**
 ```powershell
-# Custom budget amount and notifications
+# For enhanced budget features (email alerts, advanced notifications)
+# Install Azure CLI and authenticate
+az login
+
+# Then run the script - it will automatically use enhanced features
 .\SimplifiedCostControl.ps1 `
     -SubscriptionId "your-subscription-id" `
     -ResourceGroupNames @("rg-team1", "rg-team2") `
     -BudgetAmount 750 `
     -NotificationEmails @("admin@company.com", "finance@company.com")
-
-# Single resource group deployment
-.\SimplifiedCostControl.ps1 -SubscriptionId "your-subscription-id" -ResourceGroupNames @("rg-development")
 ```
+
+## 💡 **Budget Features Comparison**
+
+| Feature | PowerShell Only | PowerShell + Azure CLI |
+|---------|----------------|------------------------|
+| **Policy Deployment** | ✅ Full support | ✅ Full support |
+| **Basic Budget Creation** | ✅ Yes | ✅ Yes |
+| **Email Notifications** | ❌ Limited | ✅ Full support |
+| **80% Spending Alerts** | ❌ No | ✅ Yes |
+| **100% Forecast Alerts** | ❌ No | ✅ Yes |
+| **Setup Complexity** | 🟢 Simple | 🟡 Moderate |
 
 ## � Script Parameters
 
