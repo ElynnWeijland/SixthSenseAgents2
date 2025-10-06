@@ -1,227 +1,253 @@
-![alt text](image.png)
+<div align="center">
+    <img src="../../media/image-infra2.png" width="100%" alt="Azure AI Foundry">
+</div>
 
-# Azure Policy Initiative for Cost Control
+# Cost Control for Hackathons
 
-This directory contains PowerShell scripts for deploying Azure Policy Initiatives designed to prevent expensive services in hackathon and development environments.
+This directory contains a unified PowerShell script for deploying cost control policies and budget alerts to Azure resource groups. Perfect for hackathon and development environments.
 
 ## Overview
 
-The `HackathonPolicies.ps1` script creates and deploys a comprehensive Azure Policy Initiative that restricts the use of expensive Azure services and SKUs. It's specifically designed to control costs in hackathon or development environments while still allowing productive development with cost-effective resources.
+The `SimplifiedCostControl.ps1` script provides **complete cost protection** in two simple steps:
+1. **🛡️ Deploys policies** that deny expensive resource deployments
+2. **💰 Creates budget alerts** at the resource group level
 
-## 🔒 Policy Definitions Included
+This unified approach replaces multiple complex scripts with one simple, powerful solution.
 
-The script creates the following policy definitions to prevent expensive resource deployments:
+## �️ What Gets Protected
 
-### 1. **Expensive VM SKUs**
-- **Purpose**: Blocks GPU, high-memory, and premium compute instances
-- **Restricted SKUs**: 
-  - GPU instances: `Standard_NC*`, `Standard_ND*`, `Standard_NV*`
-  - High-memory: `Standard_GS*`, `Standard_G*`, `Standard_M*`
-  - Large compute: `Standard_E64*`, `Standard_E96*`, `Standard_F72*`
-  - Specialized: `Standard_H*`, `Standard_L*`
+The script automatically blocks deployment of expensive resources:
 
-### 2. **Premium App Service Plans**
-- **Purpose**: Prevents Premium and Isolated tier App Service plans
-- **Restricted Tiers**: 
-  - Premium (P1, P2, P3, PV2, PV3)
-  - Isolated (I1, I2, I3, IsolatedV2)
+### **Expensive VM SKUs**
+- **GPU instances**: `Standard_NC*`, `Standard_ND*`, `Standard_NV*`
+- **High-memory VMs**: `Standard_M*`, `Standard_GS*`, `Standard_G*`
+- **Specialized VMs**: `Standard_H*`, `Standard_L*`
+- **Large compute**: `Standard_F72*`, `Standard_F64*`
 
-### 3. **Expensive Storage SKUs**
-- **Purpose**: Blocks Premium storage account types
-- **Restricted SKUs**: 
-  - Premium_LRS, Premium_ZRS
-  - Premium_GRS, Premium_RAGRS
+### **Premium Storage**
+- Premium storage account SKUs: `Premium_LRS`, `Premium_ZRS`, `Premium_GRS`, `Premium_RAGRS`
 
-### 4. **Expensive Database SKUs**
-- **Purpose**: Restricts Premium SQL Database and multi-region Cosmos DB
-- **Restrictions**:
-  - SQL Database: Premium and BusinessCritical tiers
-  - Cosmos DB: Multi-write locations and failover configurations
+### **Premium App Services**
+- Premium and Isolated tiers: `Premium`, `PremiumV2`, `PremiumV3`, `Isolated`, `IsolatedV2`
 
-### 5. **Expensive AKS Node SKUs**
-- **Purpose**: Prevents costly Kubernetes node pool SKUs
-- **Restricted SKUs**: Same as VM restrictions for AKS agent pools
+### **Premium Databases**
+- SQL Database: `Premium` and `BusinessCritical` tiers
+- Cosmos DB: Multi-write region configurations
 
-### 6. **Resource Count Limits**
-- **Purpose**: Audits resource count per resource group
-- **Default Limit**: 50 resources per resource group
-- **Effect**: Audit (logs violations without blocking)
+## 💰 Budget Protection
 
-### 7. **Region Restrictions**
-- **Purpose**: Limits deployment to cost-effective regions
-- **Default Allowed Regions**: 
-  - East US, East US 2, West US 2, Central US
-- **Benefit**: Prevents deployment to expensive regions
+### **Automatic Budget Creation**
+- **Individual budgets** per resource group (default $500)
+- **Smart alerts** at 80% actual spend and 100% forecasted spend
+- **Email notifications** to specified recipients
+- **Monthly budget cycle** with automatic renewal
 
-## 🛠 Script Capabilities
+## � Quick Start
 
-### **Flexible Deployment Scope**
-- **Subscription**: Deploy policies to an entire subscription
-- **Management Group**: Deploy across multiple subscriptions
-- **Resource Group**: Limit scope to specific resource groups
-
-### **Dry Run Mode**
-- Test the deployment without making actual changes
-- Validate policy definitions and configurations
-- Perfect for testing and verification
-
-### **Comprehensive Error Handling**
-- Validates Azure authentication before proceeding
-- Handles individual policy creation failures gracefully
-- Provides detailed error messages and warnings
-
-### **Modular Design**
-- Easy to customize and extend with additional policies
-- Well-structured functions for maintainability
-- Clear separation of concerns
-
-## 📋 Usage Examples
-
-### Basic Deployment
-Deploy to a subscription with default settings:
+### **Prerequisites**
 ```powershell
-.\HackathonPolicies.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012"
-```
+# Install Azure PowerShell (if not already installed)
+Install-Module -Name Az -Force -Scope CurrentUser
 
-### Dry Run Testing
-Test the deployment without making changes:
-```powershell
-.\HackathonPolicies.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -DryRun
-```
+# Install Azure CLI for budget creation (optional but recommended)
+# Download from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
 
-### Management Group Deployment
-Deploy to a management group for broader scope:
-```powershell
-.\HackathonPolicies.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ManagementGroupId "mg-hackathon"
-```
-
-### Resource Group Scoped Deployment
-Deploy to a specific resource group:
-```powershell
-.\HackathonPolicies.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupName "rg-hackathon"
-```
-
-### Custom Location
-Specify a different Azure region for metadata storage:
-```powershell
-.\HackathonPolicies.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -Location "West US 2"
-```
-
-## 🔧 Prerequisites
-
-### PowerShell Requirements
-- **PowerShell Version**: 5.1 or later
-- **Execution Policy**: Set to allow script execution
-
-### Required Azure PowerShell Modules
-The script requires the following modules:
-- `Az.Accounts` - Azure authentication and context management
-- `Az.Policy` - Azure Policy management
-- `Az.Resources` - Azure resource management
-
-### Azure Authentication
-- Valid Azure account with appropriate permissions
-- Authenticated session using `Connect-AzAccount`
-
-## 🚀 Installation and Setup
-
-### 1. Install Required Modules
-If the Azure PowerShell modules are not installed:
-```powershell
-Install-Module -Name Az.Accounts, Az.Policy, Az.Resources -Force -Scope CurrentUser
-```
-
-### 2. Authenticate with Azure
-```powershell
+# Authenticate with both
 Connect-AzAccount
+az login
 ```
 
-### 3. Verify Subscription Access
-```powershell
-Get-AzSubscription
-```
-
-### 4. Run the Script
+### **Basic Usage**
 ```powershell
 # Navigate to the policies directory
-cd /path/to/Azure-AI-Foundry/infra/policies
+cd infra/policies
 
-# Execute the script
-.\HackathonPolicies.ps1 -SubscriptionId "your-subscription-id"
+# Deploy to multiple resource groups (recommended for hackathons)
+.\SimplifiedCostControl.ps1 -SubscriptionId "your-subscription-id" -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3")
+
+# Test first with dry run (recommended)
+.\SimplifiedCostControl.ps1 -SubscriptionId "your-subscription-id" -ResourceGroupNames @("rg-team1") -DryRun
 ```
 
-## 📊 Script Parameters
+### **Advanced Usage**
+```powershell
+# Custom budget amount and notifications
+.\SimplifiedCostControl.ps1 `
+    -SubscriptionId "your-subscription-id" `
+    -ResourceGroupNames @("rg-team1", "rg-team2") `
+    -BudgetAmount 750 `
+    -NotificationEmails @("admin@company.com", "finance@company.com")
+
+# Single resource group deployment
+.\SimplifiedCostControl.ps1 -SubscriptionId "your-subscription-id" -ResourceGroupNames @("rg-development")
+```
+
+## � Script Parameters
 
 | Parameter | Type | Required | Description | Default |
 |-----------|------|----------|-------------|---------|
 | `SubscriptionId` | String | Yes | Azure subscription ID for deployment | - |
-| `ManagementGroupId` | String | No | Management Group ID for broader scope | - |
-| `ResourceGroupName` | String | No | Resource Group name for limited scope | - |
-| `Location` | String | No | Azure region for metadata storage | "East US" |
+| `ResourceGroupNames` | String[] | Yes | Array of resource group names to protect | - |
+| `BudgetAmount` | Integer | No | Budget amount per resource group (USD) | 500 |
+| `NotificationEmails` | String[] | No | Email addresses for budget alerts | - |
 | `DryRun` | Switch | No | Test mode without actual deployment | False |
+
+## ✨ What Happens When You Run It
+
+### **Step 1: Validation**
+- ✅ Checks Azure PowerShell authentication
+- ✅ Checks Azure CLI availability (for budgets)
+- ✅ Validates resource groups exist
+- ✅ Sets subscription context
+
+### **Step 2: Policy Deployment**
+- 🛡️ Creates unified cost control policy
+- 🎯 Assigns policy to each resource group
+- ❌ Blocks expensive resource deployments immediately
+
+### **Step 3: Budget Creation**
+- 💰 Creates individual budget per resource group
+- 🔔 Configures alerts at 80% actual and 100% forecasted spend
+- 📧 Sets up email notifications if provided
+
+### **Step 4: Confirmation**
+- 📊 Shows deployment summary
+- ✅ Confirms what's now protected
+- 🎉 Provides next steps
 
 ## 🔐 Required Permissions
 
-To deploy the policies, you need the following Azure RBAC permissions:
+To deploy cost controls, you need:
 
-### At Subscription Level
-- **Policy Contributor** or **Owner** role
-- Permissions to create policy definitions and assignments
+### **Azure PowerShell Authentication**
+- **Policy Contributor** role at the resource group level
+- **Cost Management Contributor** role for budget creation (if using budgets)
 
-### At Management Group Level
-- **Management Group Contributor** or **Owner** role
-- Policy permissions across multiple subscriptions
+### **Azure CLI Authentication (for budgets)**
+- Same permissions as above
+- Authenticate with: `az login`
 
-### At Resource Group Level
-- **Policy Contributor** role on the target resource group
-- Limited scope for resource-specific policies
+## 🎯 Perfect for Hackathons
+
+### **Multi-Team Setup Example**
+```powershell
+# Step 1: Create resource groups for each team (if not already created)
+# $teams = @("rg-team-alpha", "rg-team-beta", "rg-team-gamma", "rg-team-delta")
+
+# Step 2: Deploy cost controls to all teams
+.\SimplifiedCostControl.ps1 `
+    -SubscriptionId "your-subscription-id" `
+    -ResourceGroupNames @("rg-team-alpha", "rg-team-beta", "rg-team-gamma", "rg-team-delta") `
+    -BudgetAmount 500 `
+    -NotificationEmails @("hackathon-admin@company.com")
+```
+
+### **Benefits for Hackathon Organizers**
+✅ **Team Isolation**: Each team gets their own protected resource group  
+✅ **Cost Control**: $500 budget per team with automatic alerts  
+✅ **Expense Prevention**: Blocks expensive resources before deployment  
+✅ **Easy Monitoring**: Individual budget tracking per team  
+✅ **Quick Setup**: One command deploys everything  
+
+### **Benefits for Teams**
+✅ **Clear Boundaries**: Know exactly what you can and can't deploy  
+✅ **Budget Awareness**: Get alerts before exceeding budget  
+✅ **Focus on Innovation**: Don't worry about accidentally deploying expensive resources  
+✅ **Fair Resource Access**: All teams have the same cost-effective options  
 
 ## 📈 Monitoring and Compliance
 
-### Policy Compliance
-After deployment, monitor policy compliance through:
-- **Azure Portal**: Policy > Compliance dashboard
+### **Policy Compliance**
+Monitor policy effectiveness through:
+- **Azure Portal**: Policy → Compliance dashboard
 - **Azure CLI**: `az policy state list`
 - **PowerShell**: `Get-AzPolicyState`
 
-### Cost Impact Analysis
-Track cost savings by monitoring:
-- Denied resource deployments
-- Resource type distribution
-- Regional deployment patterns
+### **Budget Monitoring**
+Track spending through:
+- **Azure Portal**: Cost Management + Billing → Budgets
+- **Email Alerts**: Automatic notifications at configured thresholds
+- **Cost Analysis**: Detailed spending breakdown per resource group
 
-### Reporting
-Generate compliance reports to track:
-- Policy violation attempts
-- Resource deployment patterns
-- Cost control effectiveness
+### **What You'll See**
+- 🛡️ **Denied Deployments**: Policy blocks expensive resources immediately
+- 📊 **Budget Status**: Real-time spending vs. budget tracking
+- 🔔 **Proactive Alerts**: Early warnings before budget exceeded
+- 📈 **Cost Trends**: Spending patterns and forecasts
 
-## 🔄 Maintenance and Updates
+## 🆘 Troubleshooting
 
-### Updating Policies
-To modify existing policies:
-1. Update the policy definitions in the script
-2. Re-run the script to update deployed policies
-3. Monitor compliance for any affected resources
+### **Common Issues**
 
-### Adding New Policies
-To add new cost control policies:
-1. Add new policy definition to `Get-PolicyDefinitions` function
-2. Test with `-DryRun` parameter
-3. Deploy to production environment
-
-### Removing Policies
-To remove specific policies:
+#### Authentication Errors
 ```powershell
-# Remove policy assignment
-Remove-AzPolicyAssignment -Name "hackathon-cost-control-initiative-assignment"
+# Check Azure PowerShell context
+Get-AzContext
 
-# Remove policy initiative
-Remove-AzPolicySetDefinition -Name "hackathon-cost-control-initiative"
+# Re-authenticate if needed
+Connect-AzAccount
 
-# Remove individual policy definitions
-Remove-AzPolicyDefinition -Name "restrictExpensiveVmSkus"
+# Check Azure CLI authentication
+az account show
 ```
+
+#### Module Not Found
+```powershell
+# Install required modules
+Install-Module -Name Az -Force -Scope CurrentUser
+Import-Module Az.Accounts, Az.Resources
+```
+
+#### Permission Denied
+- Verify **Policy Contributor** role at resource group level
+- Ensure **Cost Management Contributor** role for budgets
+- Check subscription access permissions
+
+#### Budget Creation Failed
+- Ensure Azure CLI is installed and authenticated
+- Verify Cost Management permissions
+- Check if subscription supports budgets
+
+### **Debugging Tips**
+1. Always test with `-DryRun` parameter first
+2. Check Azure Activity Log for detailed error messages
+3. Verify resource group names are correct and exist
+4. Ensure both Azure PowerShell and Azure CLI are authenticated
+
+## 📚 Additional Resources
+
+- [Azure Policy Overview](https://docs.microsoft.com/en-us/azure/governance/policy/overview)
+- [Azure Cost Management Documentation](https://docs.microsoft.com/en-us/azure/cost-management-billing/)
+- [Azure PowerShell Documentation](https://docs.microsoft.com/en-us/powershell/azure/)
+- [Azure CLI Documentation](https://docs.microsoft.com/en-us/cli/azure/)
+
+## 🎉 Cost Control Summary
+
+After running `SimplifiedCostControl.ps1`, you'll have:
+
+### **🛡️ Immediate Protection**
+- Expensive VM SKUs blocked
+- Premium storage prevented
+- Premium databases denied
+- Multi-region Cosmos DB blocked
+
+### **💰 Budget Monitoring**
+- Individual $500 budgets per resource group
+- 80% spending alerts (actual)
+- 100% forecasted spending warnings
+- Email notifications to administrators
+
+### **📊 Ongoing Visibility**
+- Policy compliance dashboard
+- Real-time budget tracking
+- Cost analysis per team/resource group
+- Proactive spending alerts
+
+**Perfect for hackathons, development environments, and any scenario where cost control is critical!** 🚀
+
+---
+
+**Last Updated**: October 2025
 
 ## 🏗 Architecture and Design Principles
 

@@ -1,180 +1,23 @@
-<div align="center">
-    <img src="../media/image-infra2.png" width="100%" alt="Azure AI Foundry">
-</div>
+![alt text](../media/image-infra.png)
+## Azure AI Foundry basic setup
 
-# Azure AI Foundry Infrastructure
+This folder contains all the deployment templates and scripts needed to set up a basic Azure AI Foundry environment. For the Knights of the Prompts workshop, we will use a simplified configuration of Azure AI Foundry, which is suitable for learning and experimentation purposes.
 
-This directory contains the infrastructure components and deployment scripts for the Azure AI Foundry project.
+### What's Deployed
 
-## 🔐 Cost Control Policies
+This template deploys the following resources:
 
-### HackathonPolicies.ps1
+- **Azure AI Foundry Resource**: The main AI resource that serves as the workspace
+- **Azure AI Project**: A project within the foundry for organizing AI assets
+- **Azure OpenAI GPT-4.1 deployment**: Language model deployment for AI agents
+- **Supporting resources**: Storage, Key Vault, Container Registry, Application Insights
+- **03-Deep-Research**: Advanced research configuration for AI experimentation
 
-The `policies/HackathonPolicies.ps1` script is a comprehensive PowerShell solution designed to prevent expensive Azure resource deployments in hackathon and development environments. This script helps organizations maintain budget control while still enabling productive development.
+> **IMPORTANT**  
+> Before using this setup, please check with your instructor if environments need to be deployed as part of the workshop. For the Knights of the Prompts hackathon, all the team environments will be deployed by the instructor.
 
-### DeployToMultipleResourceGroups.ps1
+Open your browser and go to the [Azure Portal](https://portal.azure.com). Logon with the credentials provided by your instructor.
 
-The `policies/DeployToMultipleResourceGroups.ps1` script extends the basic functionality to deploy policies to **multiple resource groups** within a single subscription. This is perfect for hackathon scenarios where each team gets their own resource group with individual cost controls and budgets.
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FKnights-of-the-Prompts%2FAzure-AI-Foundry%2Fmain%2Finfra%2Fazuredeploy.json)
 
-### CreateBudgets.ps1
-
-The `policies/CreateBudgets.ps1` script creates individual $500 budgets for each specified resource group using Azure CLI, providing granular cost control per team.
-
-#### What It Does
-
-The script creates and deploys an **Azure Policy Initiative** that automatically blocks the deployment of expensive services including:
-
-- **Expensive VM SKUs**: GPU instances (NC, ND, NV series), high-memory VMs (M, GS series), and large compute instances
-- **Premium App Service Plans**: Premium and Isolated tier app services
-- **Premium Storage**: Premium storage account SKUs that significantly increase costs
-- **Expensive Database SKUs**: Premium SQL Database tiers and multi-region Cosmos DB configurations
-- **High-Cost AKS Nodes**: Expensive Kubernetes node pool SKUs
-- **Regional Restrictions**: Limits deployments to cost-effective Azure regions
-- **Resource Count Limits**: Monitors resource count per resource group
-
-#### Key Benefits
-
-✅ **Proactive Cost Control**: Prevents expensive resources before they're deployed  
-✅ **Hackathon Ready**: Perfect for time-boxed events with budget constraints  
-✅ **Flexible Deployment**: Works at subscription, management group, or resource group scope  
-✅ **Dry Run Capability**: Test policies without making actual changes  
-✅ **Comprehensive Coverage**: Covers major Azure services that drive high costs  
-
-#### Quick Start
-
-1. **Prerequisites**
-   ```powershell
-   # Install required Azure PowerShell modules
-   Install-Module -Name Az -Force -Scope CurrentUser
-   
-   # Authenticate with Azure
-   Connect-AzAccount
-   ```
-
-2. **Basic Deployment**
-   ```powershell
-   # Navigate to the policies directory
-   cd infra/policies
-   
-   # Deploy to your subscription
-   .\HackathonPolicies.ps1 -SubscriptionId "your-subscription-id"
-   ```
-
-3. **Test First (Recommended)**
-   ```powershell
-   # Dry run to validate without deploying
-   .\HackathonPolicies.ps1 -SubscriptionId "your-subscription-id" -DryRun
-   ```
-
-#### Deployment Options
-
-| Scope | Command | Use Case |
-|-------|---------|----------|
-| **Single Subscription** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id"` | Single subscription control |
-| **Management Group** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ManagementGroupId "mg-id"` | Multi-subscription governance |
-| **Single Resource Group** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ResourceGroupName "rg-name"` | Limited scope testing |
-| **Multiple Resource Groups** | `.\DeployToMultipleResourceGroups.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2")` | **Multi-team hackathons** |
-
-#### What Gets Created
-
-The script creates:
-- **7 Custom Policy Definitions** targeting expensive services
-- **1 Policy Initiative** combining all policies
-- **1 Policy Assignment** applying the initiative to your chosen scope
-
-#### Cost Impact
-
-Typical cost savings in hackathon environments:
-- **60-80% reduction** in compute costs by blocking expensive VM SKUs
-- **40-60% reduction** in storage costs by preventing premium storage
-- **50-70% reduction** in database costs by restricting premium tiers
-- **Regional optimization** can save 20-30% based on location
-
-#### Monitoring and Compliance
-
-After deployment, monitor policy effectiveness through:
-- **Azure Portal**: Policy → Compliance dashboard
-- **Cost Management**: Track spending patterns and denied deployments
-- **Activity Log**: Review blocked deployment attempts
-
-#### Advanced Usage
-
-```powershell
-# Deploy to specific region with custom location
-.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -Location "West US 2"
-
-# Management group deployment for enterprise
-.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ManagementGroupId "hackathon-mg"
-
-# Multi-team hackathon deployment (RECOMMENDED)
-.\DeployToMultipleResourceGroups.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3")
-
-# Multi-team with custom budget and notifications
-.\DeployToMultipleResourceGroups.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2") -BudgetAmount 750 -NotificationEmails @("admin@company.com")
-
-# Create budgets separately
-.\CreateBudgets.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3") -BudgetAmount 500
-```
-
-## 🏆 Multi-Team Hackathon Scenario
-
-For hackathons with multiple teams, use the **recommended approach**:
-
-### Step 1: Deploy Policies to Multiple Resource Groups
-```powershell
-# Deploy cost control policies to all team resource groups
-.\DeployToMultipleResourceGroups.ps1 `
-    -SubscriptionId "your-subscription-id" `
-    -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3", "rg-team4") `
-    -BudgetAmount 500 `
-    -NotificationEmails @("hackathon-admin@company.com") `
-    -DryRun  # Test first!
-```
-
-### Step 2: Create Individual Budgets
-```powershell
-# Create $500 budgets for each team
-.\CreateBudgets.ps1 `
-    -SubscriptionId "your-subscription-id" `
-    -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3", "rg-team4") `
-    -BudgetAmount 500 `
-    -NotificationEmails @("hackathon-admin@company.com", "finance@company.com")
-```
-
-### Benefits of This Approach:
-✅ **Individual Cost Control**: Each team has their own $500 budget  
-✅ **Policy Enforcement**: Expensive services blocked per resource group  
-✅ **Team Isolation**: Teams can't affect each other's resources  
-✅ **Granular Monitoring**: Separate alerts and spending tracking per team  
-✅ **Easy Management**: Deploy once, monitor individually
-
-#### Troubleshooting
-
-Common issues and solutions:
-
-| Issue | Solution |
-|-------|----------|
-| **Module not found** | `Install-Module -Name Az -Force -Scope CurrentUser` |
-| **Authentication failed** | `Connect-AzAccount` and verify subscription access |
-| **Permission denied** | Ensure **Policy Contributor** role is assigned |
-| **Policy creation failed** | Check Azure service availability in target region |
-
-#### Important Notes
-
-⚠️ **Before Deployment**: Test with `-DryRun` parameter first  
-⚠️ **Permissions Required**: Policy Contributor role at deployment scope  
-⚠️ **Impact**: Policies take effect immediately after assignment  
-⚠️ **Scope**: Carefully choose deployment scope to avoid affecting production workloads  
-
-#### Getting Help
-
-For detailed documentation, examples, and troubleshooting, see:
-- [`policies/README.md`](policies/README.md) - Complete documentation
-- [Azure Policy Documentation](https://docs.microsoft.com/en-us/azure/governance/policy/)
-- [Azure Cost Management](https://docs.microsoft.com/en-us/azure/cost-management-billing/)
-
----
-
-## Other Infrastructure Components
-
-*Additional infrastructure components and deployment scripts will be documented here as they are added to the project.*
+This set of templates demonstrates how to set up Azure AI Foundry with a basic configuration, meaning with public internet access enabled, Microsoft-managed keys for encryption and _Microsoft_-managed identity configuration for the AI hub resource.
