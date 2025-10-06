@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.38.5.1644",
-      "templateHash": "12065084450356785248"
+      "templateHash": "14059894069992990237"
     }
   },
   "parameters": {
@@ -68,6 +68,13 @@
       ],
       "metadata": {
         "description": "Email addresses to receive budget alerts (optional)"
+      }
+    },
+    "deployBudgetAlert": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Whether to deploy the budget alert (requires subscription-level permissions)"
       }
     }
   },
@@ -866,6 +873,7 @@
       ]
     },
     {
+      "condition": "[parameters('deployBudgetAlert')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "[format('budget-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",

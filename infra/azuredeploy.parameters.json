@@ -16,6 +16,9 @@
         },
         "budgetAlertEmails": {
             "value": []
+        },
+        "deployBudgetAlert": {
+            "value": false
         }
     }
 }

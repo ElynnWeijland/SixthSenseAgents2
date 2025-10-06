@@ -27,6 +27,9 @@ param budgetAmount int = 500
 @description('Email addresses to receive budget alerts (optional)')
 param budgetAlertEmails array = ['douwe.vande.ruit@capgemini.com', 'pascal.regeer@capgemini.com']
 
+@description('Whether to deploy the budget alert (requires subscription-level permissions)')
+param deployBudgetAlert bool = false
+
 // Variables
 var name = toLower('${aiFoundryName}')
 
@@ -99,7 +102,7 @@ module o3DeepResearchDeployment 'modules/aoai-model-deployment.bicep' = {
   ]
 }
 
-module budgetAlert 'modules/budget-alert.bicep' = {
+module budgetAlert 'modules/budget-alert.bicep' = if (deployBudgetAlert) {
   name: 'budget-${name}-${uniqueSuffix}-deployment'
   params: {
     budgetName: 'budget-${name}-${uniqueSuffix}'
