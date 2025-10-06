@@ -21,6 +21,12 @@ param tags object = {}
 @description('Project description')
 param aiProjectDescription string = 'Knights of the Prompts'
 
+@description('Budget amount in USD for the resource group')
+param budgetAmount int = 500
+
+@description('Email addresses to receive budget alerts (optional)')
+param budgetAlertEmails array = [douwe.vande.ruit@capgemini.com;pascal.regeer@capgemini.com]
+
 // Variables
 var name = toLower('${aiFoundryName}')
 
@@ -91,4 +97,13 @@ module o3DeepResearchDeployment 'modules/aoai-model-deployment.bicep' = {
   dependsOn: [
     gpt41Deployment
   ]
+}
+
+module budgetAlert 'modules/budget-alert.bicep' = {
+  name: 'budget-${name}-${uniqueSuffix}-deployment'
+  params: {
+    budgetName: 'budget-${name}-${uniqueSuffix}'
+    budgetAmount: budgetAmount
+    alertEmails: budgetAlertEmails
+  }
 }
