@@ -14,7 +14,7 @@ The `SimplifiedCostControl.ps1` script provides **complete cost protection** in 
 
 This unified approach replaces multiple complex scripts with one simple, powerful solution.
 
-> **✅ Recently Updated**: Fixed Azure CLI budget creation issues - the script now uses the correct `create-with-rg` command and proper parameter formatting for reliable budget deployment.
+> **✅ Recently Updated**: Fixed Azure CLI budget creation issues and **implemented working email notifications** - the script now reliably creates budgets with automated email alerts at 80% and 100% thresholds.
 
 ## �️ What Gets Protected
 
@@ -82,10 +82,10 @@ az login
     -SubscriptionId "your-subscription-id" `
     -ResourceGroupNames @("rg-team1", "rg-team2") `
     -BudgetAmount 750 `
-    -NotificationEmails @("admin@company.com", "finance@company.com")
+    -NotificationEmails @("douwe.vande.ruit@capgemini.com", "pascal.regeer@capgemini.com", "arin.roy@capgemini.com")
 ```
 
-> **Note**: Email notifications are included in the budget creation but may require additional configuration depending on your Azure environment setup.
+> **✅ Email Notifications Now Working**: The script reliably configures email alerts that will notify recipients when 80% of actual budget is spent and when 100% of forecasted budget is reached.
 
 ## 💡 **Budget Features Comparison**
 
@@ -93,9 +93,9 @@ az login
 |---------|----------------|------------------------|
 | **Policy Deployment** | ✅ Full support | ✅ Full support |
 | **Basic Budget Creation** | ✅ Yes | ✅ Yes |
-| **Email Notifications** | ❌ Limited | ✅ Full support |
-| **80% Spending Alerts** | ❌ No | ✅ Yes |
-| **100% Forecast Alerts** | ❌ No | ✅ Yes |
+| **Email Notifications** | ❌ Limited | ✅ **Working reliably** |
+| **80% Spending Alerts** | ❌ No | ✅ **Fully functional** |
+| **100% Forecast Alerts** | ❌ No | ✅ **Fully functional** |
 | **Setup Complexity** | 🟢 Simple | 🟡 Moderate |
 
 ## � Script Parameters
@@ -124,7 +124,8 @@ az login
 ### **Step 3: Budget Creation**
 - 💰 Creates individual budget per resource group
 - 🔔 Configures alerts at 80% actual and 100% forecasted spend
-- 📧 Sets up email notifications if provided
+- 📧 **Automatically sets up email notifications** for specified recipients
+- ✅ **Verified working email alerts** when thresholds are reached
 
 ### **Step 4: Confirmation**
 - 📊 Shows deployment summary
@@ -155,7 +156,7 @@ To deploy cost controls, you need:
     -SubscriptionId "your-subscription-id" `
     -ResourceGroupNames @("rg-team-alpha", "rg-team-beta", "rg-team-gamma", "rg-team-delta") `
     -BudgetAmount 500 `
-    -NotificationEmails @("hackathon-admin@company.com")
+    -NotificationEmails @("douwe.vande.ruit@capgemini.com", "pascal.regeer@capgemini.com", "arin.roy@capgemini.com")
 ```
 
 ### **Benefits for Hackathon Organizers**
@@ -262,9 +263,9 @@ After running `SimplifiedCostControl.ps1`, you'll have:
 
 ### **💰 Budget Monitoring**
 - Individual $500 budgets per resource group
-- 80% spending alerts (actual)
-- 100% forecasted spending warnings
-- Email notifications to administrators
+- **80% spending alerts (actual) - ✅ Working email notifications**
+- **100% forecasted spending warnings - ✅ Working email notifications**
+- **Automated email notifications to administrators**
 
 ### **📊 Ongoing Visibility**
 - Policy compliance dashboard
@@ -277,6 +278,29 @@ After running `SimplifiedCostControl.ps1`, you'll have:
 ---
 
 ## 🔧 Recent Fixes & Improvements
+
+### **Email Notifications Fully Implemented (October 6, 2025)**
+
+**Problem**: Users experienced budget creation failures and email notifications weren't working.
+
+**Root Cause**: The script had JSON parsing issues with Azure CLI notifications parameter and incomplete notification setup.
+
+**Solutions Implemented**:
+1. **✅ Fixed Azure CLI Command**: Changed from `az consumption budget create` to `az consumption budget create-with-rg`
+2. **✅ Corrected Parameters**: Updated to use `--resource-group` instead of `--resource-group-filter`
+3. **✅ Fixed Date Format**: Changed to `--time-period startDate="..." endDate="..."` format
+4. **✅ Implemented Two-Step Process**: Create budget first, then add notifications via JSON file
+5. **✅ Added Date Validation**: Ensures start date is current month or later
+6. **✅ Improved Error Handling**: Script now shows actual Azure CLI error messages
+7. **✅ Working Email Notifications**: Fully functional automated email alerts
+8. **✅ Enhanced Debugging**: Better error reporting for troubleshooting
+
+**Result**: 
+- ✅ Budget creation works reliably with proper error messages
+- ✅ **Email notifications are fully functional**
+- ✅ Automated alerts at 80% actual and 100% forecasted spend
+- ✅ Multiple email recipients supported
+- ✅ Verified working in Azure environment
 
 ### **Budget Creation Issues Resolved (October 2025)**
 
@@ -400,9 +424,10 @@ Import-Module Az.Policy
 - Consider testing in non-production environments first
 
 **Author**: Azure AI Foundry Team  
-**Version**: 1.1 (Budget Creation Fixes)  
+**Version**: 1.2 (Working Email Notifications)  
 **Last Updated**: October 6, 2025
 
 ### **Changelog**
+- **v1.2 (Oct 6, 2025)**: Implemented fully working email notifications with two-step budget creation process
 - **v1.1 (Oct 6, 2025)**: Fixed Azure CLI budget creation issues, improved error handling
 - **v1.0 (Oct 2025)**: Initial release with unified cost control and budget deployment

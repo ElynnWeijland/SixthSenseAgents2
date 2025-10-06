@@ -8,7 +8,25 @@
     1. Creates Azure policies to deny expensive resource deployments
     2. Creates budget alerts at the resource group level
     
-    Perfect for hackathon environments where you need quick cost control.
+    Perfect for ha        if ($budgetCreated) {
+            Write-Host "  ✓ Successfully created budget: $budgetName" -ForegroundColor Green
+            
+            if ($NotificationEmails.Count -gt 0) {
+                if ($notificationsAdded) {
+                    Write-Host "  ✓ Email notifications configured for:" -ForegroundColor Green
+                    foreach ($email in $NotificationEmails) {
+                        Write-Host "    📧 $email" -ForegroundColor Green
+                    }
+                    Write-Host "  🔔 Alert thresholds: 80% actual spend, 100% forecasted spend" -ForegroundColor Green
+                } else {
+                    Write-Host "  ⚠️ Budget created but email notifications failed to configure" -ForegroundColor Yellow
+                    Write-Host "  💡 Please configure email alerts manually in Azure Portal" -ForegroundColor Yellow
+                    Write-Host "    📧 Target emails: $($NotificationEmails -join ', ')" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "  ℹ️ Budget created without email notifications" -ForegroundColor Cyan
+            }
+            return $trueonments where you need quick cost control.
 
 .PARAMETER SubscriptionId
     The Azure subscription ID where the policies and budgets will be deployed.
@@ -277,10 +295,29 @@ function New-BudgetForResourceGroup-AzureCLI {
     }
     
     try {
-        # Build notification configuration if emails provided
-        $notificationsConfig = @{}
-        if ($NotificationEmails.Count -gt 0) {
-            $emailList = $NotificationEmails -join ","
+        # Initialize variables
+        $budgetCreated = $false
+        $notificationsAdded = $false
+        
+        # First create the budget without notifications to avoid parsing issues
+        $result = az consumption budget create-with-rg `
+            --budget-name $budgetName `
+            --resource-group $ResourceGroupName `
+            --amount $Amount `
+            --category "Cost" `
+            --time-grain "Monthly" `
+            --time-period startDate="$startDate" endDate="$endDate" `
+            --subscription $SubscriptionId 2>&1
+        
+        $budgetCreated = $LASTEXITCODE -eq 0
+        
+        # If budget creation succeeded and we have notification emails, try to add notifications
+        if ($budgetCreated -and $NotificationEmails.Count -gt 0) {
+            Write-Host "  ✓ Budget created, adding email notifications..." -ForegroundColor Yellow
+            
+            # Create a temporary JSON file for notifications
+            $tempNotificationsFile = [System.IO.Path]::GetTempFileName() + ".json"
+            
             $notificationsConfig = @{
                 "Actual_80_Percent" = @{
                     "enabled" = $true
@@ -297,40 +334,39 @@ function New-BudgetForResourceGroup-AzureCLI {
                     "contactRoles" = @("Owner", "Contributor")
                 }
             }
-        }
-        
-        # Convert notifications to JSON if we have any
-        $notificationsJson = ""
-        if ($notificationsConfig.Count -gt 0) {
-            $notificationsJson = ($notificationsConfig | ConvertTo-Json -Depth 3).Replace('"', '\"')
-        }
-        
-        # Create budget using Azure CLI
-        if ($notificationsConfig.Count -gt 0) {
-            $result = az consumption budget create-with-rg `
+            
+            # Write JSON to temp file
+            $notificationsConfig | ConvertTo-Json -Depth 3 | Out-File -FilePath $tempNotificationsFile -Encoding UTF8
+            
+            # Update budget with notifications using JSON file
+            $updateResult = az consumption budget update-with-rg `
                 --budget-name $budgetName `
                 --resource-group $ResourceGroupName `
-                --amount $Amount `
-                --category "Cost" `
-                --time-grain "Monthly" `
-                --time-period startDate="$startDate" endDate="$endDate" `
-                --notifications $notificationsJson `
+                --notifications `@$tempNotificationsFile `
                 --subscription $SubscriptionId 2>&1
-        } else {
-            $result = az consumption budget create-with-rg `
-                --budget-name $budgetName `
-                --resource-group $ResourceGroupName `
-                --amount $Amount `
-                --category "Cost" `
-                --time-grain "Monthly" `
-                --time-period startDate="$startDate" endDate="$endDate" `
-                --subscription $SubscriptionId 2>&1
+            
+            # Clean up temp file
+            Remove-Item $tempNotificationsFile -ErrorAction SilentlyContinue
+            
+            if ($LASTEXITCODE -eq 0) {
+                $notificationsAdded = $true
+            } else {
+                Write-Host "    ⚠️ Budget created but notification setup failed: $updateResult" -ForegroundColor Yellow
+                $notificationsAdded = $false
+            }
         }
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  ✓ Successfully created budget: $budgetName" -ForegroundColor Green
+            
             if ($NotificationEmails.Count -gt 0) {
-                Write-Host "  ✓ Enhanced notifications configured (80% actual, 100% forecasted)" -ForegroundColor Green
+                Write-Host "  ✓ Email notifications configured for:" -ForegroundColor Green
+                foreach ($email in $NotificationEmails) {
+                    Write-Host "    📧 $email" -ForegroundColor Green
+                }
+                Write-Host "  � Alert thresholds: 80% actual spend, 100% forecasted spend" -ForegroundColor Green
+            } else {
+                Write-Host "  ℹ️ Budget created without email notifications" -ForegroundColor Cyan
             }
             return $true
         }
