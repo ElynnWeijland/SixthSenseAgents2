@@ -423,7 +423,7 @@ Import-Module Az.Policy
 - Regular updates recommended to align with Azure service changes
 - Consider testing in non-production environments first
 
-**Author**: Azure AI Foundry Team  
+**Author**: Douwe van de Ruit  
 **Version**: 1.2 (Working Email Notifications)  
 **Last Updated**: October 6, 2025
 
