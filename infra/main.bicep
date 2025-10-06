@@ -7,7 +7,7 @@
 param aiFoundryName string = 'demo'
 
 @description('Friendly name for your Azure AI Foundry resource')
-param aiFoundryFriendlyName string = 'Demo AI Foundry resource'
+param aiFoundryFriendlyName string = 'Knights of the Prompts AI Foundry resource'
 
 @description('Description of your Azure AI Foundry resource displayed in AI Foundry')
 param aiFoundryDescription string = 'This is an example AI Foundry resource for use in Azure AI Foundry.'
