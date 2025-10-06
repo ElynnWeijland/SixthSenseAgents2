@@ -12,6 +12,14 @@ This directory contains the infrastructure components and deployment scripts for
 
 The `policies/HackathonPolicies.ps1` script is a comprehensive PowerShell solution designed to prevent expensive Azure resource deployments in hackathon and development environments. This script helps organizations maintain budget control while still enabling productive development.
 
+### DeployToMultipleResourceGroups.ps1
+
+The `policies/DeployToMultipleResourceGroups.ps1` script extends the basic functionality to deploy policies to **multiple resource groups** within a single subscription. This is perfect for hackathon scenarios where each team gets their own resource group with individual cost controls and budgets.
+
+### CreateBudgets.ps1
+
+The `policies/CreateBudgets.ps1` script creates individual $500 budgets for each specified resource group using Azure CLI, providing granular cost control per team.
+
 #### What It Does
 
 The script creates and deploys an **Azure Policy Initiative** that automatically blocks the deployment of expensive services including:
@@ -62,9 +70,10 @@ The script creates and deploys an **Azure Policy Initiative** that automatically
 
 | Scope | Command | Use Case |
 |-------|---------|----------|
-| **Subscription** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id"` | Single subscription control |
+| **Single Subscription** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id"` | Single subscription control |
 | **Management Group** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ManagementGroupId "mg-id"` | Multi-subscription governance |
-| **Resource Group** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ResourceGroupName "rg-name"` | Limited scope testing |
+| **Single Resource Group** | `.\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ResourceGroupName "rg-name"` | Limited scope testing |
+| **Multiple Resource Groups** | `.\DeployToMultipleResourceGroups.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2")` | **Multi-team hackathons** |
 
 #### What Gets Created
 
@@ -96,7 +105,48 @@ After deployment, monitor policy effectiveness through:
 
 # Management group deployment for enterprise
 .\HackathonPolicies.ps1 -SubscriptionId "sub-id" -ManagementGroupId "hackathon-mg"
+
+# Multi-team hackathon deployment (RECOMMENDED)
+.\DeployToMultipleResourceGroups.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3")
+
+# Multi-team with custom budget and notifications
+.\DeployToMultipleResourceGroups.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2") -BudgetAmount 750 -NotificationEmails @("admin@company.com")
+
+# Create budgets separately
+.\CreateBudgets.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3") -BudgetAmount 500
 ```
+
+## 🏆 Multi-Team Hackathon Scenario
+
+For hackathons with multiple teams, use the **recommended approach**:
+
+### Step 1: Deploy Policies to Multiple Resource Groups
+```powershell
+# Deploy cost control policies to all team resource groups
+.\DeployToMultipleResourceGroups.ps1 `
+    -SubscriptionId "your-subscription-id" `
+    -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3", "rg-team4") `
+    -BudgetAmount 500 `
+    -NotificationEmails @("hackathon-admin@company.com") `
+    -DryRun  # Test first!
+```
+
+### Step 2: Create Individual Budgets
+```powershell
+# Create $500 budgets for each team
+.\CreateBudgets.ps1 `
+    -SubscriptionId "your-subscription-id" `
+    -ResourceGroupNames @("rg-team1", "rg-team2", "rg-team3", "rg-team4") `
+    -BudgetAmount 500 `
+    -NotificationEmails @("hackathon-admin@company.com", "finance@company.com")
+```
+
+### Benefits of This Approach:
+✅ **Individual Cost Control**: Each team has their own $500 budget  
+✅ **Policy Enforcement**: Expensive services blocked per resource group  
+✅ **Team Isolation**: Teams can't affect each other's resources  
+✅ **Granular Monitoring**: Separate alerts and spending tracking per team  
+✅ **Easy Management**: Deploy once, monitor individually
 
 #### Troubleshooting
 
