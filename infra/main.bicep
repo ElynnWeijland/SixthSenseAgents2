@@ -25,7 +25,7 @@ param aiProjectDescription string = 'Knights of the Prompts'
 param budgetAmount int = 500
 
 @description('Email addresses to receive budget alerts (optional)')
-param budgetAlertEmails array = [douwe.vande.ruit@capgemini.com;pascal.regeer@capgemini.com]
+param budgetAlertEmails array = ['douwe.vande.ruit@capgemini.com', 'pascal.regeer@capgemini.com']
 
 // Variables
 var name = toLower('${aiFoundryName}')
