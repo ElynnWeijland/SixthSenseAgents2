@@ -4,7 +4,7 @@
 @minLength(2)
 @maxLength(12)
 @description('Name for the AI resource and used to derive name of dependent resources.')
-param aiFoundryName string = 'demo'
+param aiFoundryName string = 'kotpagents'
 
 @description('Friendly name for your Azure AI Foundry resource')
 param aiFoundryFriendlyName string = 'Knights of the Prompts AI Foundry resource'

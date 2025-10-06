@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.24.24.22086",
-      "templateHash": "12017918688250772745"
+      "version": "0.38.5.1644",
+      "templateHash": "12065084450356785248"
     }
   },
   "parameters": {
     "aiFoundryName": {
       "type": "string",
-      "defaultValue": "demo",
+      "defaultValue": "kotpagents",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
@@ -78,7 +78,7 @@
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -111,8 +111,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "1030076532437697084"
+              "version": "0.38.5.1644",
+              "templateHash": "13448419811955145417"
             }
           },
           "parameters": {
@@ -328,7 +328,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -361,8 +361,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "11390303303971370668"
+              "version": "0.38.5.1644",
+              "templateHash": "12582542494334796295"
             }
           },
           "parameters": {
@@ -484,7 +484,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('project-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -505,7 +505,7 @@
             "value": "[parameters('aiProjectDescription')]"
           },
           "aiFoundryId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiFoundryId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2025-04-01').outputs.aiFoundryId.value]"
           }
         },
         "template": {
@@ -514,8 +514,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "9695759704186886963"
+              "version": "0.38.5.1644",
+              "templateHash": "15467761409359401745"
             }
           },
           "parameters": {
@@ -596,7 +596,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('gpt41-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -605,7 +605,7 @@
         "mode": "Incremental",
         "parameters": {
           "openAIAccountId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiFoundryId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2025-04-01').outputs.aiFoundryId.value]"
           },
           "deploymentName": {
             "value": "gpt41"
@@ -623,8 +623,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "11188682301152685978"
+              "version": "0.38.5.1644",
+              "templateHash": "10064084803509893631"
             }
           },
           "parameters": {
@@ -727,7 +727,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('o3-deep-research-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -736,7 +736,7 @@
         "mode": "Incremental",
         "parameters": {
           "openAIAccountId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiFoundryId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('foundry-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2025-04-01').outputs.aiFoundryId.value]"
           },
           "deploymentName": {
             "value": "o3-deep-research"
@@ -763,8 +763,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "11188682301152685978"
+              "version": "0.38.5.1644",
+              "templateHash": "10064084803509893631"
             }
           },
           "parameters": {
@@ -867,7 +867,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[format('budget-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -891,8 +891,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.24.24.22086",
-              "templateHash": "6783492731377570845"
+              "version": "0.38.5.1644",
+              "templateHash": "10133104428161729804"
             }
           },
           "parameters": {
