@@ -277,51 +277,66 @@ function New-BudgetForResourceGroup-AzureCLI {
     }
     
     try {
+        # Build notification configuration if emails provided
+        $notificationsConfig = @{}
+        if ($NotificationEmails.Count -gt 0) {
+            $emailList = $NotificationEmails -join ","
+            $notificationsConfig = @{
+                "Actual_80_Percent" = @{
+                    "enabled" = $true
+                    "operator" = "GreaterThan"
+                    "threshold" = 80
+                    "contactEmails" = $NotificationEmails
+                    "contactRoles" = @("Owner", "Contributor")
+                }
+                "Forecasted_100_Percent" = @{
+                    "enabled" = $true
+                    "operator" = "GreaterThan"
+                    "threshold" = 100
+                    "contactEmails" = $NotificationEmails
+                    "contactRoles" = @("Owner", "Contributor")
+                }
+            }
+        }
+        
+        # Convert notifications to JSON if we have any
+        $notificationsJson = ""
+        if ($notificationsConfig.Count -gt 0) {
+            $notificationsJson = ($notificationsConfig | ConvertTo-Json -Depth 3).Replace('"', '\"')
+        }
+        
         # Create budget using Azure CLI
-        $result = az consumption budget create `
-            --budget-name $budgetName `
-            --amount $Amount `
-            --category "Cost" `
-            --time-grain "Monthly" `
-            --start-date $startDate `
-            --end-date $endDate `
-            --resource-group-filter $ResourceGroupName `
-            --subscription $SubscriptionId 2>&1
+        if ($notificationsConfig.Count -gt 0) {
+            $result = az consumption budget create-with-rg `
+                --budget-name $budgetName `
+                --resource-group $ResourceGroupName `
+                --amount $Amount `
+                --category "Cost" `
+                --time-grain "Monthly" `
+                --time-period startDate="$startDate" endDate="$endDate" `
+                --notifications $notificationsJson `
+                --subscription $SubscriptionId 2>&1
+        } else {
+            $result = az consumption budget create-with-rg `
+                --budget-name $budgetName `
+                --resource-group $ResourceGroupName `
+                --amount $Amount `
+                --category "Cost" `
+                --time-grain "Monthly" `
+                --time-period startDate="$startDate" endDate="$endDate" `
+                --subscription $SubscriptionId 2>&1
+        }
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  ✓ Successfully created budget: $budgetName" -ForegroundColor Green
-            
-            # Add notifications if emails provided
             if ($NotificationEmails.Count -gt 0) {
-                $emailList = $NotificationEmails -join " "
-                
-                # 80% actual threshold
-                az consumption budget create-notification `
-                    --budget-name $budgetName `
-                    --notification-key "Actual_80_Percent" `
-                    --operator "GreaterThan" `
-                    --threshold 80 `
-                    --contact-emails $emailList `
-                    --contact-roles "Owner" "Contributor" `
-                    --subscription $SubscriptionId 2>$null
-                
-                # 100% forecasted threshold
-                az consumption budget create-notification `
-                    --budget-name $budgetName `
-                    --notification-key "Forecasted_100_Percent" `
-                    --operator "GreaterThan" `
-                    --threshold 100 `
-                    --contact-emails $emailList `
-                    --contact-roles "Owner" "Contributor" `
-                    --subscription $SubscriptionId 2>$null
-                    
                 Write-Host "  ✓ Enhanced notifications configured (80% actual, 100% forecasted)" -ForegroundColor Green
             }
-            
             return $true
         }
         else {
             Write-Host "  ✗ Failed to create budget: $budgetName" -ForegroundColor Red
+            Write-Host "    Error details: $result" -ForegroundColor Red
             return $false
         }
     }

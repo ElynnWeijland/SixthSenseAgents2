@@ -14,6 +14,8 @@ The `SimplifiedCostControl.ps1` script provides **complete cost protection** in 
 
 This unified approach replaces multiple complex scripts with one simple, powerful solution.
 
+> **✅ Recently Updated**: Fixed Azure CLI budget creation issues - the script now uses the correct `create-with-rg` command and proper parameter formatting for reliable budget deployment.
+
 ## �️ What Gets Protected
 
 The script automatically blocks deployment of expensive resources:
@@ -82,6 +84,8 @@ az login
     -BudgetAmount 750 `
     -NotificationEmails @("admin@company.com", "finance@company.com")
 ```
+
+> **Note**: Email notifications are included in the budget creation but may require additional configuration depending on your Azure environment setup.
 
 ## 💡 **Budget Features Comparison**
 
@@ -191,6 +195,15 @@ Track spending through:
 
 ### **Common Issues**
 
+#### Budget Creation Failed
+**Error**: `Failed to create budget: budget-rg-team-name`
+
+**Solutions**:
+- Ensure Azure CLI is installed and authenticated (`az login`)
+- Verify Cost Management permissions
+- Check if subscription supports budgets
+- **Fixed**: Script now uses correct `az consumption budget create-with-rg` command with proper parameter formatting
+
 #### Authentication Errors
 ```powershell
 # Check Azure PowerShell context
@@ -219,12 +232,16 @@ Import-Module Az.Accounts, Az.Resources
 - Ensure Azure CLI is installed and authenticated
 - Verify Cost Management permissions
 - Check if subscription supports budgets
+- **New**: Verify start date is current month or later (Azure requirement)
+- **Fixed**: Script now shows detailed error messages for budget failures
 
 ### **Debugging Tips**
 1. Always test with `-DryRun` parameter first
 2. Check Azure Activity Log for detailed error messages
 3. Verify resource group names are correct and exist
 4. Ensure both Azure PowerShell and Azure CLI are authenticated
+5. **New**: Budget start date must be current month or later
+6. **Improved**: Script now shows actual Azure CLI error messages for better debugging
 
 ## 📚 Additional Resources
 
@@ -256,6 +273,30 @@ After running `SimplifiedCostControl.ps1`, you'll have:
 - Proactive spending alerts
 
 **Perfect for hackathons, development environments, and any scenario where cost control is critical!** 🚀
+
+---
+
+## 🔧 Recent Fixes & Improvements
+
+### **Budget Creation Issues Resolved (October 2025)**
+
+**Problem**: Users experienced budget creation failures with errors like:
+```
+Creating budget with Azure CLI: budget-rg-team-name (500 USD)
+✗ Failed to create budget: budget-rg-team-name
+```
+
+**Root Cause**: The script was using incorrect Azure CLI commands and parameter formats for resource group budgets.
+
+**Solutions Implemented**:
+1. **✅ Fixed Azure CLI Command**: Changed from `az consumption budget create` to `az consumption budget create-with-rg`
+2. **✅ Corrected Parameters**: Updated to use `--resource-group` instead of `--resource-group-filter`
+3. **✅ Fixed Date Format**: Changed to `--time-period startDate="..." endDate="..."` format
+4. **✅ Added Date Validation**: Ensures start date is current month or later
+5. **✅ Improved Error Handling**: Script now shows actual Azure CLI error messages
+6. **✅ Enhanced Debugging**: Better error reporting for troubleshooting
+
+**Result**: Budget creation now works reliably with proper error messages when issues occur.
 
 ---
 
@@ -359,5 +400,9 @@ Import-Module Az.Policy
 - Consider testing in non-production environments first
 
 **Author**: Azure AI Foundry Team  
-**Version**: 1.0  
-**Last Updated**: October 2025
+**Version**: 1.1 (Budget Creation Fixes)  
+**Last Updated**: October 6, 2025
+
+### **Changelog**
+- **v1.1 (Oct 6, 2025)**: Fixed Azure CLI budget creation issues, improved error handling
+- **v1.0 (Oct 2025)**: Initial release with unified cost control and budget deployment
