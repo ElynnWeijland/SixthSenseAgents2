@@ -10,6 +10,7 @@ Dive into the world of intelligent conversational agents with Azure AI Foundry &
 > **💡 Think Bigger, Build Smarter!**  
 > Traditional chatbots and Copilots like ChatGPT have revolutionized how we interact with AI. But why stop there? This workshop challenges you to **think beyond chatbots** and explore the next frontier: **Agentic Applications**.
 
+
 ### 🚀 **What Are Agentic Applications?**
 Agentic applications are **AI systems with superpowers**:
 - 🗣️ **Conversational Intelligence**: Engage users naturally.
