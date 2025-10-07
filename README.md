@@ -73,6 +73,7 @@ Deep Research Tool:
 
 Agent Framework:
 - [Create Agents using Semantic Kernel](src/samples/create-semantic-kernel-agents/lab-create-simple-semantic-kernel-agents.md)
+
 - *Create Agents using AutoGen.... (coming soon)*
 - *Create Agents using the Agent Framework.... (coming soon)*
 
@@ -89,6 +90,7 @@ Build User Interfaces:
 
 MCP Integration:
 - [Create AI Foundry Agents connected to MCP Servers](src/samples/create-mcp-foundry-agents/lab-create-agent-that-uses-mcp-server.md)
+
 - *Create MCP Server....(coming soon)*
 
 Multimodal Agents:
