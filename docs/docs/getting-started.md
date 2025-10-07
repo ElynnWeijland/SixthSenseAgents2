@@ -96,6 +96,10 @@ You can get the project connection string from Azure AI Foundry portal. Go to th
 
 Your **.env** file should look similar to this but with your project connection string.
 
+If you dont see a **.env** file create a new **.env** file under ```/src/workshop```
+
+You can use the following as sample for your new **.env** file
+
 ```bash
 # Azure AI Foundry Project Configuration
 AZURE_SUBSCRIPTION_ID=<YOUR AZURE SUBSCRIPTION ID> # the subscription ID of your Azure subscription
@@ -103,7 +107,7 @@ AZURE_RESOURCE_GROUP_NAME=<YOUR AZURE RESOURCE GROUP NAME> # the name of the res
 PROJECT_ENDPOINT=https://<YOUR AZURE AI FOUNDRY RESOURCE NAME>.services.ai.azure.com/api/projects/<YOUR AZURE AI FOUNDRY PROJECT NAME> # the endpoint of your Azure AI Foundry project, you can find it in the Azure portal
 AZURE_PROJECT_NAME=<YOUR AZURE AI FOUNDRY PROJECT NAME> # the name of your Azure AI Foundry project
 # BING_RESOURCE_NAME=<YOUR BING RESOURCE NAME> # optional usage of Bing requires you to uncomment this line and provide the name of your Bing Grounding resource
-AGENT_MODEL_DEPLOYMENT_NAME=gpt-4o # or your custom GPT-4o deployment name
+MODEL_DEPLOYMENT_NAME=gpt-4o # or your custom GPT-4o deployment name
 DEEP_RESEARCH_MODEL_DEPLOYMENT_NAME=o3-deep-research # or your custom Deep Research model deployment name
 ```
 
