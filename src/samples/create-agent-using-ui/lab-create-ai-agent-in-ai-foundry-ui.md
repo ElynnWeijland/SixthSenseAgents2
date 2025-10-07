@@ -1,4 +1,6 @@
-![alt text](../../../media/image-foundry-ui.png)
+<div align="center">
+    <img src="../../../media/image-foundry-ui.png" width="100%" alt="AI Foundry UI">
+</div>
 
 # Sample: Create AI Agent in AI Foundry UI
 
