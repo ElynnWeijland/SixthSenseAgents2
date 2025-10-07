@@ -47,7 +47,7 @@
     .\SimplifiedCostControl.ps1 -SubscriptionId "12345678-1234-1234-1234-123456789012" -ResourceGroupNames @("rg-team1", "rg-team2")
 
 .EXAMPLE
-    .\SimplifiedCostControl.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1") -BudgetAmount 750 -NotificationEmails @("admin@company.com")
+    .\SimplifiedCostControl.ps1 -SubscriptionId "sub-id" -ResourceGroupNames @("rg-team1") -BudgetAmount 750 -NotificationEmails @("u****@example.com")
 #>
 
 [CmdletBinding()]

@@ -63,8 +63,8 @@
     "budgetAlertEmails": {
       "type": "array",
       "defaultValue": [
-        "douwe.vande.ruit@capgemini.com",
-        "pascal.regeer@capgemini.com"
+        "u****@example.com",
+        "u****@example.com"
       ],
       "metadata": {
         "description": "Email addresses to receive budget alerts (optional)"

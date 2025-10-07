@@ -82,7 +82,7 @@ az login
     -SubscriptionId "your-subscription-id" `
     -ResourceGroupNames @("rg-team1", "rg-team2") `
     -BudgetAmount 750 `
-    -NotificationEmails @("douwe.vande.ruit@capgemini.com", "pascal.regeer@capgemini.com", "arin.roy@capgemini.com")
+    -NotificationEmails @("u****@example.com", "u****@example.com", "u****@example.com")
 ```
 
 > **✅ Email Notifications Now Working**: The script reliably configures email alerts that will notify recipients when 80% of actual budget is spent and when 100% of forecasted budget is reached.
@@ -156,7 +156,7 @@ To deploy cost controls, you need:
     -SubscriptionId "your-subscription-id" `
     -ResourceGroupNames @("rg-team-alpha", "rg-team-beta", "rg-team-gamma", "rg-team-delta") `
     -BudgetAmount 500 `
-    -NotificationEmails @("douwe.vande.ruit@capgemini.com", "pascal.regeer@capgemini.com", "arin.roy@capgemini.com")
+    -NotificationEmails @("u****@example.com", "u****@example.com", "u****@example.com")
 ```
 
 ### **Benefits for Hackathon Organizers**
