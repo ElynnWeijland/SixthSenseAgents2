@@ -46,7 +46,7 @@ The way to run this workshop is using GitHub Codespaces. This provides a pre-con
 
 Select **Open in GitHub Codespaces** to open the project in GitHub Codespaces.
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/doruit/Knights-Of-The-Prompts-Agent-Workshop)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Knights-of-the-Prompts/Azure-AI-Foundry)
 
 > WARNING "It will take several minutes to build the Codespace so carry on reading the instructions while it builds."
 
