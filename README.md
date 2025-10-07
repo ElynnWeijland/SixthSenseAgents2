@@ -73,10 +73,11 @@ Deep Research Tool:
 
 Agent Framework:
 - [Create Agents using Semantic Kernel](src/samples/create-semantic-kernel-agents/lab-create-simple-semantic-kernel-agents.md)
-*Create Agents using AutoGen.... (coming soon)*
+- *Create Agents using AutoGen.... (coming soon)*
+- *Create Agents using the Agent Framework.... (coming soon)*
 
 Autonomous Agents:
-*Create Autonomous Agents....(coming soon)*
+- *Create Autonomous Agents....(coming soon)*
 
 Sovereign AI using Foundry Local:
 - [Setup Foundry Local to go Sovereign](src/samples/create-sovereign-agents-using-foundry-local/lab-get-started-with-foundry-local.md)
@@ -84,10 +85,11 @@ Sovereign AI using Foundry Local:
 
 Build User Interfaces:
 - [Create a (mockup) User Interface for Agents using Vibe Coding](src/samples/create-a-user-interface-for-agents/lab-vibe-coding-mockup-ui.md)
+- *Create a NLWeb UI for Agents....(coming soon)*
 
 MCP Integration:
 - [Create AI Foundry Agents connected to MCP Servers](src/samples/create-mcp-foundry-agents/lab-create-agent-that-uses-mcp-server.md)
-*Create MCP Server....(coming soon)*
+- *Create MCP Server....(coming soon)*
 
 Multimodal Agents:
 - [Create a Talking Avatar website using Azure Text-to-Speech Avatar Real-Time API](src/samples/create-a-talking-avatar/avatar/README.md)
@@ -98,3 +100,10 @@ Multimodal Agents:
 Integration with Business Applications:
 - Create Agents with SAP Connector....(coming soon)
 - Create Agents with Salesforce Connector....(coming soon)
+
+## Resources for organizing a hackathon 🎉
+
+If you are interested in organizing a hackathon using this repository, check out the infra folder. 📂 It contains scripts and templates to set up the Azure infrastructure needed for the hackathon, as well as policies to control costs. 💰 Below are the links to the guides:
+
+- **Hackathon Infrastructure Setup Guide**: 🛠️ Learn how to set up the necessary Azure infrastructure for hosting a hackathon, including cost control policies and deployment scripts. [Read more here](infra/README.md).
+- **Cost Control Policies Guide**: 📊 Understand the cost control policies implemented to manage and monitor expenses during the hackathon. [Read more here](infra/policies/README.md).
