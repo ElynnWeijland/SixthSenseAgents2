@@ -74,7 +74,6 @@ Deep Research Tool:
 
 Agent Framework:
 - [Create Agents using Semantic Kernel](src/samples/create-semantic-kernel-agents/lab-create-simple-semantic-kernel-agents.md)
-
 - *Create Agents using AutoGen.... (coming soon)*
 - *Create Agents using the Agent Framework.... (coming soon)*
 
