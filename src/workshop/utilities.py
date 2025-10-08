@@ -204,29 +204,12 @@ class Utilities:
             self.log_msg_purple(f"Uploading file: {file_path}")
             
             try:
-                # Try different approaches for file upload
-                if hasattr(project_client, 'upload_file'):
-                    # Direct upload via project client
-                    file_info = project_client.upload_file(
-                        file_path=str(file_path),
+                # Use the correct upload method for Azure AI Projects
+                with open(file_path, "rb") as f:
+                    file_info = project_client.agents.files.upload(
+                        file=f,
                         purpose="assistants"
                     )
-                elif hasattr(project_client.agents, 'upload_file'):
-                    # Upload via agents with file object
-                    with open(file_path, "rb") as f:
-                        file_info = project_client.agents.upload_file(
-                            file=f,
-                            purpose="assistants"
-                        )
-                else:
-                    # Try with context manager
-                    with project_client as client:
-                        with client.agents as agents_client:
-                            with open(file_path, "rb") as f:
-                                file_info = agents_client.upload_file(
-                                    file=f,
-                                    purpose="assistants"
-                                )
                 
                 file_ids.append(file_info.id)
                 self.log_msg_purple(f"File uploaded successfully: {file_info.id}")
@@ -241,25 +224,21 @@ class Utilities:
         self.log_msg_purple("Creating the vector store")
 
         try:
-            # Create a vector store using project_client
-            if hasattr(project_client, 'create_vector_store_and_poll'):
-                vector_store = project_client.create_vector_store_and_poll(
-                    file_ids=file_ids, 
-                    name=vector_name_name
+            # Create a vector store using the correct API
+            vector_store = project_client.agents.vector_stores.create(
+                name=vector_name_name
+            )
+            
+            # Add files to the vector store
+            for file_id in file_ids:
+                project_client.agents.vector_stores.files.create(
+                    vector_store_id=vector_store.id,
+                    file_id=file_id
                 )
-            elif hasattr(project_client.agents, 'create_vector_store_and_poll'):
-                vector_store = project_client.agents.create_vector_store_and_poll(
-                    file_ids=file_ids, 
-                    name=vector_name_name
-                )
-            else:
-                # Try with context manager
-                with project_client as client:
-                    with client.agents as agents_client:
-                        vector_store = agents_client.create_vector_store_and_poll(
-                            file_ids=file_ids, 
-                            name=vector_name_name
-                        )
+            
+            # Wait for processing (simple approach)
+            import time
+            time.sleep(2)  # Give some time for processing
             
             self.log_msg_purple(f"Vector store created and files added: {vector_store.id}")
             return vector_store

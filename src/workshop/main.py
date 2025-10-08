@@ -84,16 +84,16 @@ functions = AsyncFunctionTool(
 async def add_agent_tools():
     """Add tools for the agent."""
 
-    # Add the functions tool
+    # # Add the functions tool
     # toolset.add(functions)
 
-    # Add the code interpreter tool
+    # # Add the code interpreter tool
     # code_interpreter = CodeInterpreterTool()
     # toolset.add(code_interpreter)
 
-    # # Add the tents data sheet to a new vector data store
+    # # Add file search tool - uncomment to enable file search capability
+    # print("Creating vector store for file search...")
     # try:
-    #     print("Creating vector store for file search...")
     #     vector_store = utilities.create_vector_store(
     #         project_client,
     #         files=[TENTS_DATA_SHEET_FILE],
