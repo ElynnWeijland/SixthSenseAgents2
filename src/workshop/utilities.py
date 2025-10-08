@@ -75,49 +75,28 @@ class Utilities:
             if not os.path.exists(downloads_dir):
                 os.makedirs(downloads_dir)
             
-            # Iterate through each message to find file content
+            # Track if any files were found and downloaded
+            files_downloaded = False
+            
+            # Get the latest agent message only (to avoid redownloading old files)
+            latest_agent_message = None
             for message in messages:
-                # Check all content items in the message
-                if hasattr(message, 'content') and message.content:
-                    for content_item in message.content:
-                        # Check for different types of content
-                        if hasattr(content_item, 'type'):
-                            # Handle image_file type
-                            if content_item.type == 'image_file' and hasattr(content_item, 'image_file'):
-                                file_id = content_item.image_file.file_id
-                                file_name = f"{file_id}_image.png"
-                                local_path = os.path.join(downloads_dir, file_name)
-                                
-                                try:
-                                    # Download file content from Azure AI
-                                    file_content_generator = project_client.agents.files.get_content(file_id=file_id)
-                                    file_content = b''.join(file_content_generator)
-                                    with open(local_path, "wb") as f:
-                                        f.write(file_content)
-                                    self.log_msg_green(f"Downloaded image file: {local_path}")
-                                except Exception as e:
-                                    print(f"Error downloading image {file_id}: {e}")
-                            
-                            # Handle file_path type (for other files)
-                            elif content_item.type == 'file_path' and hasattr(content_item, 'file_path'):
-                                file_id = content_item.file_path.file_id
-                                file_name = f"{file_id}_file"
-                                local_path = os.path.join(downloads_dir, file_name)
-                                
-                                try:
-                                    # Download file content from Azure AI
-                                    file_content_generator = project_client.agents.files.get_content(file_id=file_id)
-                                    file_content = b''.join(file_content_generator)
-                                    with open(local_path, "wb") as f:
-                                        f.write(file_content)
-                                    self.log_msg_green(f"Downloaded file: {local_path}")
-                                except Exception as e:
-                                    print(f"Error downloading file {file_id}: {e}")
-                        
-                        # Fallback: check for image_file attribute directly
-                        elif hasattr(content_item, 'image_file') and content_item.image_file:
+                if message.role.value == "assistant":
+                    latest_agent_message = message
+                    break
+            
+            if not latest_agent_message:
+                return  # No agent messages to process
+            
+            # Check all content items in the latest agent message only
+            if hasattr(latest_agent_message, 'content') and latest_agent_message.content:
+                for content_item in latest_agent_message.content:
+                    # Check for different types of content
+                    if hasattr(content_item, 'type'):
+                        # Handle image_file type
+                        if content_item.type == 'image_file' and hasattr(content_item, 'image_file'):
                             file_id = content_item.image_file.file_id
-                            file_name = f"{file_id}_direct_image.png"
+                            file_name = f"{file_id}_image.png"
                             local_path = os.path.join(downloads_dir, file_name)
                             
                             try:
@@ -126,14 +105,15 @@ class Utilities:
                                 file_content = b''.join(file_content_generator)
                                 with open(local_path, "wb") as f:
                                     f.write(file_content)
-                                self.log_msg_green(f"Downloaded direct image file: {local_path}")
+                                self.log_msg_green(f"Downloaded image file: {local_path}")
+                                files_downloaded = True
                             except Exception as e:
-                                print(f"Error downloading direct image {file_id}: {e}")
+                                print(f"Error downloading image {file_id}: {e}")
                         
-                        # Fallback: check for file_path attribute directly  
-                        elif hasattr(content_item, 'file_path') and content_item.file_path:
+                        # Handle file_path type (for other files)
+                        elif content_item.type == 'file_path' and hasattr(content_item, 'file_path'):
                             file_id = content_item.file_path.file_id
-                            file_name = f"{file_id}_direct_file"
+                            file_name = f"{file_id}_file"
                             local_path = os.path.join(downloads_dir, file_name)
                             
                             try:
@@ -142,16 +122,15 @@ class Utilities:
                                 file_content = b''.join(file_content_generator)
                                 with open(local_path, "wb") as f:
                                     f.write(file_content)
-                                self.log_msg_green(f"Downloaded direct file: {local_path}")
+                                self.log_msg_green(f"Downloaded file: {local_path}")
+                                files_downloaded = True
                             except Exception as e:
-                                print(f"Error downloading direct file {file_id}: {e}")
-                
-                # Legacy approaches (keeping for compatibility)
-                # Save generated image files
-                if hasattr(message, 'image_contents') and message.image_contents:
-                    for image_content in message.image_contents:
-                        file_id = image_content.image_file.file_id
-                        file_name = f"{file_id}_legacy_image.png"
+                                print(f"Error downloading file {file_id}: {e}")
+                    
+                    # Fallback: check for image_file attribute directly
+                    elif hasattr(content_item, 'image_file') and content_item.image_file:
+                        file_id = content_item.image_file.file_id
+                        file_name = f"{file_id}_direct_image.png"
                         local_path = os.path.join(downloads_dir, file_name)
                         
                         try:
@@ -160,23 +139,16 @@ class Utilities:
                             file_content = b''.join(file_content_generator)
                             with open(local_path, "wb") as f:
                                 f.write(file_content)
-                            self.log_msg_green(f"Downloaded legacy image file: {local_path}")
+                            self.log_msg_green(f"Downloaded direct image file: {local_path}")
+                            files_downloaded = True
                         except Exception as e:
-                            print(f"Error downloading legacy image {file_id}: {e}")
-                
-                # Process file path annotations (primary method for code interpreter files)
-                if hasattr(message, 'file_path_annotations') and message.file_path_annotations:
-                    for file_path_annotation in message.file_path_annotations:
-                        file_id = file_path_annotation.file_path.file_id
-                        
-                        # Get original filename from the annotation text if possible
-                        annotation_text = file_path_annotation.text
-                        if "/" in annotation_text:
-                            original_filename = annotation_text.split("/")[-1]
-                        else:
-                            original_filename = f"{file_id}_annotation_file"
-                        
-                        local_path = os.path.join(downloads_dir, original_filename)
+                            print(f"Error downloading direct image {file_id}: {e}")
+                    
+                    # Fallback: check for file_path attribute directly  
+                    elif hasattr(content_item, 'file_path') and content_item.file_path:
+                        file_id = content_item.file_path.file_id
+                        file_name = f"{file_id}_direct_file"
+                        local_path = os.path.join(downloads_dir, file_name)
                         
                         try:
                             # Download file content from Azure AI
@@ -184,9 +156,53 @@ class Utilities:
                             file_content = b''.join(file_content_generator)
                             with open(local_path, "wb") as f:
                                 f.write(file_content)
-                            self.log_msg_green(f"Downloaded generated file: {local_path}")
+                            self.log_msg_green(f"Downloaded direct file: {local_path}")
+                            files_downloaded = True
                         except Exception as e:
-                            print(f"Error downloading file {file_id}: {e}")
+                            print(f"Error downloading direct file {file_id}: {e}")
+            
+            # Process file path annotations (primary method for code interpreter files) - latest message only
+            if hasattr(latest_agent_message, 'file_path_annotations') and latest_agent_message.file_path_annotations:
+                for file_path_annotation in latest_agent_message.file_path_annotations:
+                    file_id = file_path_annotation.file_path.file_id
+                    
+                    # Get original filename from the annotation text if possible
+                    annotation_text = file_path_annotation.text
+                    if "/" in annotation_text:
+                        original_filename = annotation_text.split("/")[-1]
+                    else:
+                        original_filename = f"{file_id}_annotation_file"
+                    
+                    local_path = os.path.join(downloads_dir, original_filename)
+                    
+                    try:
+                        # Download file content from Azure AI
+                        file_content_generator = project_client.agents.files.get_content(file_id=file_id)
+                        file_content = b''.join(file_content_generator)
+                        with open(local_path, "wb") as f:
+                            f.write(file_content)
+                        self.log_msg_green(f"Downloaded generated file: {local_path}")
+                        files_downloaded = True
+                    except Exception as e:
+                        print(f"Error downloading file {file_id}: {e}")
+            
+            # Legacy approaches (keeping for compatibility) - latest message only
+            if hasattr(latest_agent_message, 'image_contents') and latest_agent_message.image_contents:
+                for image_content in latest_agent_message.image_contents:
+                    file_id = image_content.image_file.file_id
+                    file_name = f"{file_id}_legacy_image.png"
+                    local_path = os.path.join(downloads_dir, file_name)
+                    
+                    try:
+                        # Download file content from Azure AI
+                        file_content_generator = project_client.agents.files.get_content(file_id=file_id)
+                        file_content = b''.join(file_content_generator)
+                        with open(local_path, "wb") as f:
+                            f.write(file_content)
+                        self.log_msg_green(f"Downloaded legacy image file: {local_path}")
+                        files_downloaded = True
+                    except Exception as e:
+                        print(f"Error downloading legacy image {file_id}: {e}")
             
         except Exception as e:
             print(f"Error handling file downloads: {e}")
