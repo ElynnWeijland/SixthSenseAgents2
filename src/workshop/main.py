@@ -76,8 +76,8 @@ functions = AsyncFunctionTool(
     }
 )
 
-# INSTRUCTIONS_FILE = "instructions/instructions_function_calling.txt"
-# INSTRUCTIONS_FILE = "instructions/instructions_code_interpreter.txt"
+INSTRUCTIONS_FILE = "instructions/instructions_function_calling.txt"
+INSTRUCTIONS_FILE = "instructions/instructions_code_interpreter.txt"
 # INSTRUCTIONS_FILE = "instructions/instructions_file_search.txt"
 
 
@@ -85,11 +85,11 @@ async def add_agent_tools():
     """Add tools for the agent."""
 
     # Add the functions tool
-    # toolset.add(functions)
+    toolset.add(functions)
 
     # Add the code interpreter tool
-    # code_interpreter = CodeInterpreterTool()
-    # toolset.add(code_interpreter)
+    code_interpreter = CodeInterpreterTool()
+    toolset.add(code_interpreter)
 
     # Skip file search tool for now to avoid HTTP transport issues
     # print("Skipping file search tool to avoid transport issues...")
@@ -258,6 +258,13 @@ async def post_message(thread_id: str, content: str, agent: Agent, thread: Agent
                     print("\n".join(t.text.value for t in response.text_messages))
                 else:
                     print("No response message found")
+                
+                # Handle file downloads from code interpreter
+                try:
+                    utilities.download_agent_files(project_client, thread_id)
+                except Exception as e:
+                    print(f"Error handling file downloads: {e}")
+                    
             except Exception as e:
                 print(f"Error getting response message: {e}")
 
