@@ -91,9 +91,6 @@ async def add_agent_tools():
     code_interpreter = CodeInterpreterTool()
     toolset.add(code_interpreter)
 
-    # Skip file search tool for now to avoid HTTP transport issues
-    # print("Skipping file search tool to avoid transport issues...")
-    
     # # Add the tents data sheet to a new vector data store
     # try:
     #     print("Creating vector store for file search...")
