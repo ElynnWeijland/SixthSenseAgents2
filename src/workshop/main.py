@@ -84,7 +84,7 @@ functions = AsyncFunctionTool(
 async def add_agent_tools():
     """Add tools for the agent."""
 
-    # # Add the functions tool
+    # Add the functions tool
     # toolset.add(functions)
 
     # # Add the code interpreter tool

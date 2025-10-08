@@ -75,9 +75,6 @@ class Utilities:
             if not os.path.exists(downloads_dir):
                 os.makedirs(downloads_dir)
             
-            # Track if any files were found and downloaded
-            files_downloaded = False
-            
             # Get the latest agent message only (to avoid redownloading old files)
             latest_agent_message = None
             for message in messages:
@@ -88,83 +85,16 @@ class Utilities:
             if not latest_agent_message:
                 return  # No agent messages to process
             
-            # Check all content items in the latest agent message only
-            if hasattr(latest_agent_message, 'content') and latest_agent_message.content:
-                for content_item in latest_agent_message.content:
-                    # Check for different types of content
-                    if hasattr(content_item, 'type'):
-                        # Handle image_file type
-                        if content_item.type == 'image_file' and hasattr(content_item, 'image_file'):
-                            file_id = content_item.image_file.file_id
-                            file_name = f"{file_id}_image.png"
-                            local_path = os.path.join(downloads_dir, file_name)
-                            
-                            try:
-                                # Download file content from Azure AI
-                                file_content_generator = project_client.agents.files.get_content(file_id=file_id)
-                                file_content = b''.join(file_content_generator)
-                                with open(local_path, "wb") as f:
-                                    f.write(file_content)
-                                self.log_msg_green(f"Downloaded image file: {local_path}")
-                                files_downloaded = True
-                            except Exception as e:
-                                print(f"Error downloading image {file_id}: {e}")
-                        
-                        # Handle file_path type (for other files)
-                        elif content_item.type == 'file_path' and hasattr(content_item, 'file_path'):
-                            file_id = content_item.file_path.file_id
-                            file_name = f"{file_id}_file"
-                            local_path = os.path.join(downloads_dir, file_name)
-                            
-                            try:
-                                # Download file content from Azure AI
-                                file_content_generator = project_client.agents.files.get_content(file_id=file_id)
-                                file_content = b''.join(file_content_generator)
-                                with open(local_path, "wb") as f:
-                                    f.write(file_content)
-                                self.log_msg_green(f"Downloaded file: {local_path}")
-                                files_downloaded = True
-                            except Exception as e:
-                                print(f"Error downloading file {file_id}: {e}")
-                    
-                    # Fallback: check for image_file attribute directly
-                    elif hasattr(content_item, 'image_file') and content_item.image_file:
-                        file_id = content_item.image_file.file_id
-                        file_name = f"{file_id}_direct_image.png"
-                        local_path = os.path.join(downloads_dir, file_name)
-                        
-                        try:
-                            # Download file content from Azure AI
-                            file_content_generator = project_client.agents.files.get_content(file_id=file_id)
-                            file_content = b''.join(file_content_generator)
-                            with open(local_path, "wb") as f:
-                                f.write(file_content)
-                            self.log_msg_green(f"Downloaded direct image file: {local_path}")
-                            files_downloaded = True
-                        except Exception as e:
-                            print(f"Error downloading direct image {file_id}: {e}")
-                    
-                    # Fallback: check for file_path attribute directly  
-                    elif hasattr(content_item, 'file_path') and content_item.file_path:
-                        file_id = content_item.file_path.file_id
-                        file_name = f"{file_id}_direct_file"
-                        local_path = os.path.join(downloads_dir, file_name)
-                        
-                        try:
-                            # Download file content from Azure AI
-                            file_content_generator = project_client.agents.files.get_content(file_id=file_id)
-                            file_content = b''.join(file_content_generator)
-                            with open(local_path, "wb") as f:
-                                f.write(file_content)
-                            self.log_msg_green(f"Downloaded direct file: {local_path}")
-                            files_downloaded = True
-                        except Exception as e:
-                            print(f"Error downloading direct file {file_id}: {e}")
+            # Track downloaded file IDs to avoid duplicates
+            downloaded_file_ids = set()
             
-            # Process file path annotations (primary method for code interpreter files) - latest message only
+            # First, process file path annotations (primary method for code interpreter files)
             if hasattr(latest_agent_message, 'file_path_annotations') and latest_agent_message.file_path_annotations:
                 for file_path_annotation in latest_agent_message.file_path_annotations:
                     file_id = file_path_annotation.file_path.file_id
+                    
+                    if file_id in downloaded_file_ids:
+                        continue  # Skip if already downloaded
                     
                     # Get original filename from the annotation text if possible
                     annotation_text = file_path_annotation.text
@@ -182,15 +112,32 @@ class Utilities:
                         with open(local_path, "wb") as f:
                             f.write(file_content)
                         self.log_msg_green(f"Downloaded generated file: {local_path}")
-                        files_downloaded = True
+                        downloaded_file_ids.add(file_id)
                     except Exception as e:
                         print(f"Error downloading file {file_id}: {e}")
             
-            # Legacy approaches (keeping for compatibility) - latest message only
-            if hasattr(latest_agent_message, 'image_contents') and latest_agent_message.image_contents:
-                for image_content in latest_agent_message.image_contents:
-                    file_id = image_content.image_file.file_id
-                    file_name = f"{file_id}_legacy_image.png"
+            # Second, check content items for any files not caught by annotations
+            if hasattr(latest_agent_message, 'content') and latest_agent_message.content:
+                for content_item in latest_agent_message.content:
+                    file_id = None
+                    file_name = None
+                    
+                    # Check for different types of content
+                    if hasattr(content_item, 'type'):
+                        # Handle image_file type
+                        if content_item.type == 'image_file' and hasattr(content_item, 'image_file'):
+                            file_id = content_item.image_file.file_id
+                            file_name = f"{file_id}_image.png"
+                        
+                        # Handle file_path type (for other files)
+                        elif content_item.type == 'file_path' and hasattr(content_item, 'file_path'):
+                            file_id = content_item.file_path.file_id
+                            file_name = f"{file_id}_file"
+                    
+                    # Skip if no file found or already downloaded
+                    if not file_id or file_id in downloaded_file_ids:
+                        continue
+                    
                     local_path = os.path.join(downloads_dir, file_name)
                     
                     try:
@@ -199,10 +146,10 @@ class Utilities:
                         file_content = b''.join(file_content_generator)
                         with open(local_path, "wb") as f:
                             f.write(file_content)
-                        self.log_msg_green(f"Downloaded legacy image file: {local_path}")
-                        files_downloaded = True
+                        self.log_msg_green(f"Downloaded file: {local_path}")
+                        downloaded_file_ids.add(file_id)
                     except Exception as e:
-                        print(f"Error downloading legacy image {file_id}: {e}")
+                        print(f"Error downloading file {file_id}: {e}")
             
         except Exception as e:
             print(f"Error handling file downloads: {e}")
@@ -214,51 +161,20 @@ class Utilities:
         env = os.getenv("ENVIRONMENT", "local")
         prefix = "src/workshop/" if env == "container" else ""
 
-        # Upload the files using project_client directly
+        # Upload the files to Azure AI
         for file in files:
             file_path = Path(f"{prefix}{file}")
             self.log_msg_purple(f"Uploading file: {file_path}")
-            
-            try:
-                # Use the correct upload method for Azure AI Projects
-                with open(file_path, "rb") as f:
-                    file_info = project_client.agents.files.upload(
-                        file=f,
-                        purpose="assistants"
-                    )
-                
-                file_ids.append(file_info.id)
-                self.log_msg_purple(f"File uploaded successfully: {file_info.id}")
-                
-            except Exception as e:
-                self.log_msg_purple(f"Error uploading file {file_path}: {e}")
-                raise
-
-        if not file_ids:
-            raise ValueError("No files were successfully uploaded")
+            with file_path.open("rb") as f:
+                # Upload file using agents upload_file method
+                uploaded_file = project_client.agents.upload_file(file=f, purpose="assistants")
+                file_ids.append(uploaded_file.id)
 
         self.log_msg_purple("Creating the vector store")
 
-        try:
-            # Create a vector store using the correct API
-            vector_store = project_client.agents.vector_stores.create(
-                name=vector_name_name
-            )
-            
-            # Add files to the vector store
-            for file_id in file_ids:
-                project_client.agents.vector_stores.files.create(
-                    vector_store_id=vector_store.id,
-                    file_id=file_id
-                )
-            
-            # Wait for processing (simple approach)
-            import time
-            time.sleep(2)  # Give some time for processing
-            
-            self.log_msg_purple(f"Vector store created and files added: {vector_store.id}")
-            return vector_store
-            
-        except Exception as e:
-            self.log_msg_purple(f"Error creating vector store: {e}")
-            raise
+        # Create a vector store  using the vector_stores.create_and_poll method
+        vector_store = project_client.agents.create_vector_store_and_poll(
+            file_ids=file_ids, name=vector_name_name
+        )
+        self.log_msg_purple(f"Vector store created: {vector_store.id}")
+        return vector_store
