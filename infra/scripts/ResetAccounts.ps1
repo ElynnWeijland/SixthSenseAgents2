@@ -14,18 +14,8 @@ Connect-MgGraph -Scopes "User.ReadWrite.All"
 # Define the array of user accounts
 # Replace these with the actual user accounts (UPNs)
 $userAccounts = @(
-    "username1@example.com",
-    "username2@example.com",
-    "username3@example.com",
-    "username4@example.com",
-    "username5@example.com",
-    "username6@example.com",
-    "username7@example.com",
-    "username8@example.com",
-    "username9@example.com",
-    "username10@example.com",
-    "username11@example.com",
-    "username12@example.com"
+    "TheAgencyUser-11@capgeminilanding.onmicrosoft.com",
+    "TheAgencyUser-12@capgeminilanding.onmicrosoft.com"
 )
 
 # Define the output CSV file path

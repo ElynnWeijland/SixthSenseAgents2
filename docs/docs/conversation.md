@@ -59,7 +59,7 @@ There are prompt starters in the centre of the chat window. You can select one o
 
 1. Next, we'll going to upload a Contoso Tents Datasheet to the Assistants API. This will allow the assistant to provide more detailed information about the tents. The Assistants API will vectorize the PDF and store the data in a vector store and the LLM will be able to access the data using hybrid (semantic and keyword) queries.
 
-   1. Drag and drop the **contoso-tents-datasheet.pdf** onto the Contoso Sales Assistant. The assistant will now have access to the tent data. The PDF file can be found in the **resources** folder of this repository.
+   1. Drag and drop the **contoso-tents-datasheet.pdf** onto the Contoso Sales Assistant. The assistant will now have access to the tent data. The PDF file can be found in the **src/workshop/datasheet** folder of this repository.
    2. Add the prompt **`What beginner-friendly tents does Contoso sell?`**
    3. Resubmit the question.
 
