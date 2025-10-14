@@ -324,4 +324,16 @@ The Deep Research tool will then perform the research:
 
 ![alt text](../../../media/image-deepresearch10.png)
 
-The research can take several minutes to complete. Once done, a research summary will be created in the file `final_research_summary.md`:
+The research can take several minutes (15 minutes in our case!) to complete so make sure to be patient. Once done, a research summary will be created in the file `final_research_summary.md`. 
+
+![alt text](../../../media/image-deepresearch11.png)
+![alt text](../../../media/image-deepresearch12.png)
+
+# Optional: Use vibe coding to modify the script to output a Word Document
+You can use vibe coding to modify the script to output a Word document instead of a markdown file. 
+
+Go to Github Copilot and make sure Agent mode is enabled. In the prompt input section, add the following prompt:
+
+```prompt
+Modify the create_research_summary function to output a Word document instead of a markdown file. Use the python-docx library to create the Word document. The document should have a title "Research Summary", a timestamp, the text summary, and a references section with unique URL citations. Save the document as research_summary.docx.
+```
