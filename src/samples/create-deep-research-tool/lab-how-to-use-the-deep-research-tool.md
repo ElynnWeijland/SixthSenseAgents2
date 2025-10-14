@@ -132,6 +132,10 @@ def create_research_summary(
         return
 
     with open(filepath, "w", encoding="utf-8") as fp:
+        # Add timestamp and header
+        fp.write(f"# Research Summary\n")
+        fp.write(f"Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        
         # Write text summary
         text_summary = "\n\n".join([t.text.value.strip() for t in message.text_messages])
         fp.write(text_summary)
@@ -196,7 +200,7 @@ with project_client:
         )
         print(f"Created message, ID: {message.id}")
 
-        print(f"Start processing the message... this may take a few minutes to finish. Be patient!")
+        print(f"Start processing the initial message... this may take a few minutes to finish. Be patient!")
         # Poll the run as long as run status is queued or in progress
         run = agents_client.runs.create(thread_id=thread.id, agent_id=agent.id)
         last_message_id = None
@@ -211,17 +215,73 @@ with project_client:
             )
             print(f"Run status: {run.status}")
 
-        print(f"Run finished with status: {run.status}, ID: {run.id}")
+        print(f"Initial run finished with status: {run.status}, ID: {run.id}")
 
         if run.status == "failed":
             print(f"Run failed: {run.last_error}")
+        else:
+            # Get and display the initial response
+            initial_message = agents_client.messages.get_last_message_by_role(
+                thread_id=thread.id, role=MessageRole.AGENT
+            )
+            if initial_message:
+                print("\n" + "="*60)
+                print("INITIAL RESPONSE:")
+                print("="*60)
+                print("\n".join(t.text.value for t in initial_message.text_messages))
+                
+                # Show citations if any
+                if initial_message.url_citation_annotations:
+                    print("\nURL Citations:")
+                    for ann in initial_message.url_citation_annotations:
+                        print(f"- [{ann.url_citation.title}]({ann.url_citation.url})")
+            
+            # Ask for user refinement
+            print("\n" + "="*60)
+            print("You can now provide refinement instructions to improve the research.")
+            print("="*60)
+            
+            refinement = input("\nEnter your refinement instructions (or press Enter to skip): ").strip()
+            
+            if refinement:
+                print(f"\nAdding refinement: {refinement}")
+                # Create a new message with the refinement
+                refinement_message = agents_client.messages.create(
+                    thread_id=thread.id,
+                    role="user",
+                    content=refinement,
+                )
+                print(f"Created refinement message, ID: {refinement_message.id}")
+                
+                print(f"Starting deep research with refinement... this may take several minutes. Be patient!")
+                # Create a new run for the refinement
+                refined_run = agents_client.runs.create(thread_id=thread.id, agent_id=agent.id)
+                last_message_id = None
+                
+                while refined_run.status in ("queued", "in_progress"):
+                    time.sleep(2)  # Slightly longer sleep for deep research
+                    refined_run = agents_client.runs.get(thread_id=thread.id, run_id=refined_run.id)
+
+                    last_message_id = fetch_and_print_new_agent_response(
+                        thread_id=thread.id,
+                        agents_client=agents_client,
+                        last_message_id=last_message_id,
+                    )
+                    print(f"Deep research run status: {refined_run.status}")
+
+                print(f"Deep research run finished with status: {refined_run.status}, ID: {refined_run.id}")
+                
+                if refined_run.status == "failed":
+                    print(f"Refined run failed: {refined_run.last_error}")
+            else:
+                print("No refinement provided, using initial response.")
 
         # Fetch the final message from the agent in the thread and create a research summary
         final_message = agents_client.messages.get_last_message_by_role(
             thread_id=thread.id, role=MessageRole.AGENT
         )
         if final_message:
-            create_research_summary(final_message)
+            create_research_summary(final_message, "final_research_summary.md")
 
         # Clean-up and delete the agent once the run is finished.
         # NOTE: Comment out this line if you plan to reuse the agent later.
@@ -234,3 +294,34 @@ Run the script from your terminal:
 ```python
 python create_deep_research_agent.py
 ```
+
+After a while the LLM will respond with an initial response asking for refinement. You must provide additional instructions to refine the research or just press Enter to skip this step. The agent will then perform deep research and provide a final response.
+
+In our case this was the initial response:
+
+```prompt
+============================================================
+INITIAL RESPONSE:
+============================================================
+Quantum computing is a very broad topic! To ensure I get you the most relevant and useful results, could you clarify a few things:
+
+- Are you interested in specific subfields (such as hardware, algorithms, error correction, applications, quantum machine learning, etc.)?
+- Would you like a summary of breakthroughs, key papers, industry news, or all of the above?
+- Is your audience technical or non-technical?
+- Should I prioritize peer-reviewed academic sources, industry announcements, or both?
+- Any geographic focus (e.g., global, US-based, Europe)?
+- Preferred format (e.g., bullet points, report with sections, tabular summary)?
+
+Let me know your preferences, and I’ll tailor the research accordingly!
+
+============================================================
+You can now provide refinement instructions to improve the research.
+============================================================
+```
+You can then provide refinement instructions or you just simply say "just go ahead". 
+
+The Deep Research tool will then perform the research:
+
+![alt text](../../../media/image-deepresearch10.png)
+
+The research can take several minutes to complete. Once done, a research summary will be created in the file `final_research_summary.md`:
