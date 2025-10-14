@@ -337,3 +337,9 @@ Go to Github Copilot and make sure Agent mode is enabled. In the prompt input se
 ```prompt
 Modify the create_research_summary function to output a Word document instead of a markdown file. Use the python-docx library to create the Word document. The document should have a title "Research Summary", a timestamp, the text summary, and a references section with unique URL citations. Save the document as research_summary.docx.
 ```
+
+While Github Copilot Agent is running it will ask for user input every now and then. Review each Human in the Loop suggestion and accept, reject or answer the questions.
+
+In our case several iterations were needed to get the desired changes. The final version of the script is able to output both a markdown file and a Word documents:
+
+![alt text](../../../media/image-deepresearch13.png)
