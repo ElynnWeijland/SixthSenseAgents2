@@ -31,7 +31,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
     ImmediatePurgeDataOn30Days: true
     IngestionMode: 'ApplicationInsights'
     publicNetworkAccessForIngestion: 'Enabled'
-    publicNetworkAccessForQuery: 'Disabled'
+    publicNetworkAccessForQuery: 'Enabled'
     Request_Source: 'rest'
   }
 }
