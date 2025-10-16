@@ -107,6 +107,7 @@ def fetch_and_print_new_agent_response(
     agents_client: AgentsClient,
     last_message_id: Optional[str] = None,
     show_details: bool = True,
+    show_thinking: bool = False,
 ) -> Optional[str]:
     response = agents_client.messages.get_last_message_by_role(
         thread_id=thread_id,
@@ -116,12 +117,125 @@ def fetch_and_print_new_agent_response(
         return last_message_id  # No new content
 
     if show_details:
-        print("\nAgent response:")
-        print("\n".join(t.text.value for t in response.text_messages))
+        content = "\n".join(t.text.value for t in response.text_messages)
+        
+        if show_thinking:
+            # Show the agent's thinking/reasoning process
+            print("\n" + "="*60)
+            print("🧠 AGENT THINKING & REASONING:")
+            print("="*60)
+            
+            # Show content in chunks to understand the reasoning
+            if len(content) > 500:
+                print(f"📝 Response Content ({len(content)} characters):")
+                print("-" * 40)
+                # Show first part for reasoning
+                print(content[:800] + "..." if len(content) > 800 else content)
+                print("-" * 40)
+            else:
+                print("📝 Response Content:")
+                print(content)
+        else:
+            print("\nAgent response:")
+            print(content)
 
-        for ann in response.url_citation_annotations:
-            print(f"URL Citation: [{ann.url_citation.title}]({ann.url_citation.url})")
+        # Show URL citations with more detail
+        if response.url_citation_annotations:
+            print("\n🔗 SOURCES BEING REFERENCED:")
+            print("-" * 40)
+            for i, ann in enumerate(response.url_citation_annotations, 1):
+                title = ann.url_citation.title or "Untitled Source"
+                url = ann.url_citation.url
+                print(f"{i}. 📄 {title}")
+                print(f"   🌐 {url}")
+                print()
 
+    return response.id
+
+
+def monitor_research_progress(
+    thread_id: str,
+    agents_client: AgentsClient,
+    last_message_id: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Monitor research progress and show detailed information about sources and reasoning
+    """
+    response = agents_client.messages.get_last_message_by_role(
+        thread_id=thread_id,
+        role=MessageRole.AGENT,
+    )
+    
+    if not response or response.id == last_message_id:
+        return last_message_id  # No new content
+
+    content = "\n".join(t.text.value for t in response.text_messages)
+    
+    # Analyze the content to show what's happening
+    print("\n" + "="*70)
+    print("🔍 RESEARCH PROGRESS UPDATE")
+    print("="*70)
+    
+    # Show content analysis
+    if "start_research_task(" in content:
+        print("📋 RESEARCH TASK SETUP:")
+        # Extract and show the research parameters
+        lines = content.split('\n')
+        for line in lines:
+            if 'title=' in line:
+                title = line.split('title=')[1].strip(' ",')
+                print(f"   📌 Research Title: {title}")
+            elif 'response=' in line:
+                response_text = line.split('response=')[1].strip(' ",')[:200]
+                print(f"   💭 Agent's Plan: {response_text}...")
+        print()
+    
+    # Show reasoning and progress
+    if len(content) > 100:
+        print(f"📊 Content Generated: {len(content):,} characters")
+        
+        # Look for thinking patterns
+        content_lower = content.lower()
+        if any(phrase in content_lower for phrase in ["analyzing", "researching", "investigating", "examining"]):
+            print("🧠 Agent is actively analyzing sources...")
+        
+        if any(phrase in content_lower for phrase in ["found", "discovered", "according to", "based on"]):
+            print("📖 Agent is synthesizing information from sources...")
+        
+        if any(phrase in content_lower for phrase in ["conclusion", "summary", "key findings"]):
+            print("📝 Agent is compiling final findings...")
+    
+    # Show sources being referenced
+    if response.url_citation_annotations:
+        print(f"\n🌐 ONLINE RESOURCES REFERENCED ({len(response.url_citation_annotations)} sources):")
+        print("-" * 50)
+        
+        for i, ann in enumerate(response.url_citation_annotations, 1):
+            title = ann.url_citation.title or f"Source {i}"
+            url = ann.url_citation.url
+            
+            # Try to identify the type of source
+            source_type = "📄 Document"
+            if "arxiv.org" in url:
+                source_type = "📚 Academic Paper"
+            elif "nature.com" in url or "science.org" in url:
+                source_type = "🔬 Scientific Journal"
+            elif "github.com" in url:
+                source_type = "💻 Code Repository"
+            elif "news" in url or "press" in url:
+                source_type = "📰 News Article"
+            elif ".edu" in url:
+                source_type = "🎓 Academic Institution"
+            elif ".gov" in url:
+                source_type = "🏛️ Government Source"
+            
+            print(f"{i:2d}. {source_type}")
+            print(f"     📌 {title}")
+            print(f"     🌐 {url}")
+            print()
+    
+    print("="*70)
+    
     return response.id
 
 
@@ -307,20 +421,21 @@ def wait_for_research_completion(
                 if not research_started_flag and is_research_starting(content):
                     print("🚀 Deep Research Task initialized - research is now starting...")
                     research_started_flag = True
+                    # Show detailed setup information
+                    monitor_research_progress(thread_id, agents_client, last_message_id)
                 
                 # Check if research is complete (flag enabled but start_research_task no longer running)
                 elif is_research_complete(content, research_started_flag):
                     elapsed_minutes = (time.time() - start_time) / 60
                     print(f"✅ Research completed after {elapsed_minutes:.1f} minutes!")
                     print(f"📊 Final content length: {len(content):,} characters")
+                    # Show final detailed information
+                    monitor_research_progress(thread_id, agents_client, last_message_id)
                     return current_message
                 
-                # Show progress
+                # Show detailed progress during research
                 elif research_started_flag:
-                    if "start_research_task(" in content:
-                        print(f"� Research task still running... ({len(content)} characters)")
-                    else:
-                        print(f"📝 Research results available... ({len(content)} characters)")
+                    monitor_research_progress(thread_id, agents_client, last_message_id)
                 
                 last_message_id = current_message.id
             
