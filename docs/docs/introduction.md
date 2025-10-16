@@ -10,7 +10,7 @@ Unlike traditional applications, where developers define the logic and workflows
 
 ## What is the Azure AI Agent Service
 
-The Azure AI Agent Service is now in public preview, offering a fully managed cloud service with SDKs for [Python](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-python-azure) and [C#](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-csharp). It simplifies AI agent development, reducing complex tasks like function calling to just a few lines of code.
+The Azure AI Agent Service offers a fully managed cloud service with SDKs for [Python](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-python-azure) and [C#](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-csharp). It simplifies AI agent development, reducing complex tasks like function calling to just a few lines of code.
 
 !!! info "Function calling allows you to connect LLMs to external tools and systems. This is useful for many things such as empowering AI agents with capabilities, or building deep integrations between your applications and LLMs."
 
