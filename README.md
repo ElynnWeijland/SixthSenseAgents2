@@ -32,8 +32,8 @@ This workshop is your gateway to creating **intelligent, action-driven AI soluti
 ### Watch a recent workshop execution video
 
 <div align="left">
-    <a href="https://youtu.be/Q5rOED1FQJQ" target="_blank">
-        <img src="https://img.youtube.com/vi/Q5rOED1FQJQ/0.jpg" alt="Watch the workshop overview video on YouTube" width="40%">
+    <a href="https://www.youtube.com/watch?v=4NTSHfQZqnw" target="_blank">
+        <img src="https://img.youtube.com/vi/4NTSHfQZqnw/0.jpg" alt="Watch the workshop overview video on YouTube" width="40%">
     </a>
 </div>
 
