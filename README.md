@@ -29,6 +29,14 @@ This workshop is your gateway to creating **intelligent, action-driven AI soluti
 ### ⏱️ Duration
 🕒 45 - 60 minutes
 
+### Watch a recent workshop execution video
+
+<div align="left">
+    <a href="https://youtu.be/Q5rOED1FQJQ" target="_blank">
+        <img src="https://img.youtube.com/vi/Q5rOED1FQJQ/0.jpg" alt="Watch the workshop overview video on YouTube" width="40%">
+    </a>
+</div>
+
 ## 💡 The Use Case for This Lab
 
 <div align="left" style="padding: 10px;">
