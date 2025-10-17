@@ -32,7 +32,7 @@ This workshop is your gateway to creating **intelligent, action-driven AI soluti
 ### Watch a recent workshop execution video
 
 <div align="left">
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/4NTSHfQZqnw" title="Watch the workshop overview video on YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/z2mReVIfYI0" title="Watch the workshop overview video on YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ## 💡 The Use Case for This Lab
