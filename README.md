@@ -29,10 +29,15 @@ This workshop is your gateway to creating **intelligent, action-driven AI soluti
 ### ⏱️ Duration
 🕒 45 - 60 minutes
 
-### Watch a recent workshop execution video
+### 🎥 Watch a Recent Workshop Execution Video
+
+Catch a glimpse of the workshop in action! Watch the latest execution of this workshop to see how to build intelligent agents step-by-step. Click the thumbnail below to view the video:
 
 <div align="left">
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/z2mReVIfYI0" title="Watch the workshop overview video on YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <a href="https://youtu.be/z2mReVIfYI0" target="_blank">
+        <img src="media/kotp-lab1-2.png" alt="Workshop Video Thumbnail" width="50%">
+    </a>
+    <p><a href="https://youtu.be/z2mReVIfYI0" target="_blank">Watch the Workshop Video</a></p>
 </div>
 
 ## 💡 The Use Case for This Lab
