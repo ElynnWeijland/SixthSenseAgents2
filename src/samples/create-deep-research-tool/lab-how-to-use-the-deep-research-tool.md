@@ -71,6 +71,14 @@ To use the Deep Research tool, you need to connect a Bing Grounding resource to 
 # Create an agent with the Deep Research tool
 Assuming a new Azure AI Foundry project has been created in either West US or Norway East, follow the steps below to create an agent with the Deep Research tool.
 
+
+# Install the Azure AI Projects package (pre-release!)
+You can install the package with the following command:
+
+```bash
+pip install --pre azure-ai-projects
+```
+
 ## Setup the Python script
 Create a new Python script named `deep_research_agent.py` and add the following code:
 
