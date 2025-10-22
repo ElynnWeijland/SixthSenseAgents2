@@ -5,6 +5,8 @@ import logging
 from typing import Tuple
 
 from azure.ai.agents.models import MessageRole
+from azure.storage.blob import BlobServiceClient
+
 
 from utils import (
     project_client,
@@ -23,22 +25,58 @@ import re
 
 logger = logging.getLogger(__name__)
 
+    url = "https://mystorageaccount.blob.core.windows.net"
+    container = "fileshare"
+    blob = "AvailabilityLogs.log"
+    sas = "sp=rl&st=2025-10-22T14:01:55Z&se=2025-11-05T23:16:55Z&sv=2024-11-04&sr=c&sig=bI26zBbf0ArKtsbFVbtIgNktC3NGtFOMcYCtXH%2Bj%2BGY%3D"
+    
+    result = search_responsetime_in_log(url, container, blob, sas)
+    for line in result:
+        print(line)
 
-async def async_llm_decide(user_input: str) -> str:
-    """Decide whether to 'solve' or 'escalate' based on the input.
-
-    NOTE: This is intentionally simple and keyword-based. Replace this
-    implementation with a real LLM call if desired.
+async def search_responsetime_in_log(storage_account_url, container_name, blob_name, sas_token):
     """
-    # Simulate async LLM latency
-    await asyncio.sleep(0.05)
-    text = (user_input or "").lower()
-    # crude heuristic: if CPU or high cpu load mentioned -> solve
-    if "cpu" in text and ("high" in text or "high cpu" in text or "high cpu load" in text or "cpu usage" in text):
-        print("async_llm_decide: returning 'solve'")
-        return "solve"
-    print("async_llm_decide: returning 'escalate'")
-    return "escalate"
+    Zoekt naar de tekst 'responsetime' in een blobbestand genaamd availability.log.
+
+    Parameters:
+    - storage_account_url: URL van het Azure Storage Account (zonder SAS-token)
+    - container_name: naam van de container waarin de blob zich bevindt
+    - blob_name: naam van de blob (bijv. 'availability.log')
+    - sas_token: SAS-token voor toegang tot de blob
+
+    Returns:
+    - List van regels waarin 'responsetime' voorkomt
+    """
+    # Maak een client aan met SAS-token
+    blob_service_client = BlobServiceClient(account_url=storage_account_url, credential=sas_token)
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+
+    # Download de inhoud van de blob
+    download_stream = blob_client.download_blob()
+    content = download_stream.readall().decode('utf-8')
+
+    # Zoek naar regels met 'CPU High'
+    matches = [line for line in content.splitlines() if 'CPU High' in line]
+
+    return matches
+
+
+
+# async def async_llm_decide(user_input: str) -> str:
+#     """Decide whether to 'solve' or 'escalate' based on the input.
+
+#     NOTE: This is intentionally simple and keyword-based. Replace this
+#     implementation with a real LLM call if desired.
+#     """
+#     # Simulate async LLM latency
+#     await asyncio.sleep(0.05)
+#     text = (user_input or "").lower()
+#     # crude heuristic: if CPU or high cpu load mentioned -> solve
+#     if "cpu" in text and ("high" in text or "high cpu" in text or "high cpu load" in text or "cpu usage" in text):
+#         print("async_llm_decide: returning 'solve'")
+#         return "solve"
+#     print("async_llm_decide: returning 'escalate'")
+#     return "escalate"
 
 
 async def create_agent_from_prompt(prompt_path: str | None = None) -> Tuple[object, object]:
@@ -93,121 +131,123 @@ async def create_agent_from_prompt(prompt_path: str | None = None) -> Tuple[obje
 
     return agent, thread
 
-async def post_message(thread_id: str, content: str, agent: object, thread: object, timeout_seconds: int = 120) -> str:
-    """Post a message to the monitor agent and print the agent response.
 
-    This is a lightweight variant that does not handle tool calls.
-    """
-    # -- Workflow implemented as requested (5 explicit steps) --
-    try:
-        # Step 1: Input comes in (log data from storage account)
-        user_input = content
-        print(f"Step 1: Received input: {user_input}")
 
-        # Step 2: Ask the decision agent (preferred) to return 'solve' or 'escalate'
-        print("Step 2: Creating and querying the Decision Agent to determine 'solve' vs 'escalate'...")
-        decision = None
-        decision_agent = None
-        decision_thread = None
-        try:
-            decision_agent, decision_thread = await create_decision_agent()
+# async def post_message(thread_id: str, content: str, agent: object, thread: object, timeout_seconds: int = 120) -> str:
+#     """Post a message to the monitor agent and print the agent response.
 
-            # Post the user's problem to the decision agent's thread
-            msg = project_client.agents.messages.create(
-                thread_id=decision_thread.id,
-                role="user",
-                content=user_input,
-            )
-            print(f"Decision agent message created: {getattr(msg, 'id', '<no-id>')}")
+#     This is a lightweight variant that does not handle tool calls.
+#     """
+#     # -- Workflow implemented as requested (5 explicit steps) --
+#     try:
+#         # Step 1: Input comes in (log data from storage account)
+#         user_input = content
+#         print(f"Step 1: Received input: {user_input}")
 
-            # Create a run for the decision agent and poll until completion
-            run = project_client.agents.runs.create(thread_id=decision_thread.id, agent_id=decision_agent.id)
-            print(f"Decision agent run created: {getattr(run, 'id', '<no-id>')}")
+#         # Step 2: Ask the decision agent (preferred) to return 'solve' or 'escalate'
+#         print("Step 2: Creating and querying the Decision Agent to determine 'solve' vs 'escalate'...")
+#         decision = None
+#         decision_agent = None
+#         decision_thread = None
+#         try:
+#             decision_agent, decision_thread = await create_decision_agent()
 
-            waited = 0
-            poll_interval = 1
-            timeout = 30
-            while run.status in ("queued", "in_progress", "requires_action") and waited < timeout:
-                time.sleep(poll_interval)
-                waited += poll_interval
-                try:
-                    run = project_client.agents.runs.get(thread_id=decision_thread.id, run_id=run.id)
-                    print(f"Decision run status: {run.status}")
-                except Exception as e:
-                    logger.debug("Error polling decision run: %s", e)
+#             # Post the user's problem to the decision agent's thread
+#             msg = project_client.agents.messages.create(
+#                 thread_id=decision_thread.id,
+#                 role="user",
+#                 content=user_input,
+#             )
+#             print(f"Decision agent message created: {getattr(msg, 'id', '<no-id>')}")
 
-            if run.status == "completed":
-                # Read the agent's last message (should be exactly 'solve' or 'escalate')
-                try:
-                    resp = project_client.agents.messages.get_last_message_by_role(
-                        thread_id=decision_thread.id,
-                        role=MessageRole.AGENT,
-                    )
-                    if resp and getattr(resp, 'text_messages', None):
-                        text = "\n".join(t.text.value for t in resp.text_messages)
-                        decision = text.strip().lower()
-                        print(f"Decision agent replied: {decision}")
-                except Exception as e:
-                    print(f"Error reading decision agent response: {e}")
+#             # Create a run for the decision agent and poll until completion
+#             run = project_client.agents.runs.create(thread_id=decision_thread.id, agent_id=decision_agent.id)
+#             print(f"Decision agent run created: {getattr(run, 'id', '<no-id>')}")
 
-        except Exception as e:
-            print(f"Decision agent error: {e}")
-            logger.debug("Decision agent failure, falling back to local LLM: %s", e)
-        finally:
-            # Cleanup the temporary decision agent
-            try:
-                if decision_agent:
-                    project_client.agents.delete_agent(decision_agent.id)
-                    print(f"Deleted decision agent: {decision_agent.id}")
-            except Exception as e:
-                print(f"Error deleting decision agent: {e}")
+#             waited = 0
+#             poll_interval = 1
+#             timeout = 30
+#             while run.status in ("queued", "in_progress", "requires_action") and waited < timeout:
+#                 time.sleep(poll_interval)
+#                 waited += poll_interval
+#                 try:
+#                     run = project_client.agents.runs.get(thread_id=decision_thread.id, run_id=run.id)
+#                     print(f"Decision run status: {run.status}")
+#                 except Exception as e:
+#                     logger.debug("Error polling decision run: %s", e)
 
-        # Fallback to local LLM decision if agent approach failed
-        if not decision:
-            print("Falling back to local LLM decision implementation...")
-            decision = await async_llm_decide(user_input)
+#             if run.status == "completed":
+#                 # Read the agent's last message (should be exactly 'solve' or 'escalate')
+#                 try:
+#                     resp = project_client.agents.messages.get_last_message_by_role(
+#                         thread_id=decision_thread.id,
+#                         role=MessageRole.AGENT,
+#                     )
+#                     if resp and getattr(resp, 'text_messages', None):
+#                         text = "\n".join(t.text.value for t in resp.text_messages)
+#                         decision = text.strip().lower()
+#                         print(f"Decision agent replied: {decision}")
+#                 except Exception as e:
+#                     print(f"Error reading decision agent response: {e}")
 
-        print(f"Step 3: LLM decision: {decision}")
+#         except Exception as e:
+#             print(f"Decision agent error: {e}")
+#             logger.debug("Decision agent failure, falling back to local LLM: %s", e)
+#         finally:
+#             # Cleanup the temporary decision agent
+#             try:
+#                 if decision_agent:
+#                     project_client.agents.delete_agent(decision_agent.id)
+#                     print(f"Deleted decision agent: {decision_agent.id}")
+#             except Exception as e:
+#                 print(f"Error deleting decision agent: {e}")
 
-        # Step 4: If decision == 'solve', reboot the VM
-        if decision == "solve":
-            print("Step 4: Decision is 'solve' — attempting to reboot VM in Azure environment...")
-            # Try to extract VM name and resource group from the input, otherwise use environment
-            vm_name = "VirtualMachine"
-            resource_group = AZURE_RESOURCE_GROUP_NAME
-            subscription_id = AZURE_SUBSCRIPTION_ID
+#         # Fallback to local LLM decision if agent approach failed
+#         if not decision:
+#             print("Falling back to local LLM decision implementation...")
+#             decision = await async_llm_decide(user_input)
 
-            # crude parsing: look for patterns like 'vm_name=NAME' or 'vm NAME'
-            m = re.search(r"vm_name[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
-            if m:
-                vm_name = m.group(1)
-            else:
-                m2 = re.search(r"vm[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
-                if m2:
-                    vm_name = m2.group(1)
+#         print(f"Step 3: LLM decision: {decision}")
 
-            if not vm_name:
-                # If VM name not provided in input, try env variable
-                vm_name = os.getenv("AZURE_VM_NAME")
+#         # Step 4: If decision == 'solve', reboot the VM
+#         if decision == "solve":
+#             print("Step 4: Decision is 'solve' — attempting to reboot VM in Azure environment...")
+#             # Try to extract VM name and resource group from the input, otherwise use environment
+#             vm_name = "VirtualMachine"
+#             resource_group = AZURE_RESOURCE_GROUP_NAME
+#             subscription_id = AZURE_SUBSCRIPTION_ID
 
-            if not vm_name:
-                print("VM name not found in input or environment; cannot reboot. Escalating.")
-                return "Unfamiliar issue detected, human intervention is needed."
+#             # crude parsing: look for patterns like 'vm_name=NAME' or 'vm NAME'
+#             m = re.search(r"vm_name[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
+#             if m:
+#                 vm_name = m.group(1)
+#             else:
+#                 m2 = re.search(r"vm[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
+#                 if m2:
+#                     vm_name = m2.group(1)
 
-            try:
-                reboot_result = await async_reboot_vm(resource_group=resource_group, vm_name=vm_name, subscription_id=subscription_id)
-                print(f"Reboot result: {reboot_result}")
-                # Step 5: Return solved message
-                return "The problem is solved, your virtual machine is rebooted."
-            except Exception as e:
-                print(f"Error rebooting VM: {e}")
-                logger.exception(e)
-                return "Unfamiliar issue detected, human intervention is needed."
+#             if not vm_name:
+#                 # If VM name not provided in input, try env variable
+#                 vm_name = os.getenv("AZURE_VM_NAME")
 
-        # If decision is 'escalate' or anything else -> escalate
-        print("Step 4: Decision is 'escalate' — not attempting reboot.")
-        # Step 5: Return escalation message
-        return "Unfamiliar issue detected, human intervention is needed."
+#             if not vm_name:
+#                 print("VM name not found in input or environment; cannot reboot. Escalating.")
+#                 return "Unfamiliar issue detected, human intervention is needed."
+
+#             try:
+#                 reboot_result = await async_reboot_vm(resource_group=resource_group, vm_name=vm_name, subscription_id=subscription_id)
+#                 print(f"Reboot result: {reboot_result}")
+#                 # Step 5: Return solved message
+#                 return "The problem is solved, your virtual machine is rebooted."
+#             except Exception as e:
+#                 print(f"Error rebooting VM: {e}")
+#                 logger.exception(e)
+#                 return "Unfamiliar issue detected, human intervention is needed."
+
+#         # If decision is 'escalate' or anything else -> escalate
+#         print("Step 4: Decision is 'escalate' — not attempting reboot.")
+#         # Step 5: Return escalation message
+#         return "Unfamiliar issue detected, human intervention is needed."
 
     except Exception as e:
         print(f"Error posting message: {e}")
