@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
     url = "https://mystorageaccount.blob.core.windows.net"
     container = "fileshare"
     blob = "AvailabilityLogs.log"
-    sas = "sp=rl&st=2025-10-22T14:01:55Z&se=2025-11-05T23:16:55Z&sv=2024-11-04&sr=c&sig=bI26zBbf0ArKtsbFVbtIgNktC3NGtFOMcYCtXH%2Bj%2BGY%3D"
+    sas = "<INSERT SAS TOKEN>"
     
     result = search_responsetime_in_log(url, container, blob, sas)
     for line in result:
