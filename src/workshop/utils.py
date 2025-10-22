@@ -110,7 +110,7 @@ reboot_tool = AsyncFunctionTool(
 )
 
 INSTRUCTIONS_FILE = "../instructions/resolution_agent_prompt.txt"
-
+# INSTRUCTIONS_FILE = "../instructions/monitor_agent_prompt.txt"
 
 async def add_agent_tools() -> None:
     """Add configured tools to the global toolset used when creating agents.
