@@ -46,7 +46,7 @@ async def create_agent_from_prompt(prompt_path: str | None = None) -> Tuple[obje
 
     Args:
         prompt_path: optional path to the prompt file. If omitted, looks for
-            ../instructions/resolution_agent_prompt.txt relative to this file.
+            ../instructions/monitor_agent_prompt.txt relative to this file.
 
     Returns:
         (agent, thread)
@@ -76,70 +76,31 @@ async def create_agent_from_prompt(prompt_path: str | None = None) -> Tuple[obje
         # ignore if already added or unsupported
         pass
 
-    print("Creating resolution agent...")
+    print("Creating monitor agent...")
     agent = project_client.agents.create_agent(
         model=API_DEPLOYMENT_NAME,
-        name="Resolution Agent",
+        name="Monitor Agent",
         instructions=instructions,
         temperature=0.0,
         toolset=toolset,
         headers={"x-ms-enable-preview": "true"},
     )
-    print(f"Created resolution agent: {agent.id}")
+    print(f"Created monitor agent: {agent.id}")
 
-    print("Creating thread for resolution agent...")
+    print("Creating thread for monitor agent...")
     thread = project_client.agents.threads.create()
     print(f"Created thread: {thread.id}")
 
     return agent, thread
 
-
-async def create_decision_agent() -> Tuple[object, object]:
-    """Create a tiny decision-only agent that replies with exactly 'solve' or 'escalate'.
-
-    This agent is created on-demand and deleted after use. It keeps the model
-    call inside the Foundry agent runtime so we use the actual LLM instead of a
-    local heuristic.
-    Returns (agent, thread)
-    """
-    instructions = (
-        "You are a tiny Decision Agent. When given a user problem description, "
-        "respond with exactly one word, either 'solve' or 'escalate'. "
-        "Return 'solve' only if the problem explicitly describes high CPU usage "
-        "or high CPU load on a VM; otherwise return 'escalate'. Do not add any "
-        "other text or punctuation."
-    )
-
-    # Ensure shared tools are available (none needed for decision)
-    try:
-        await add_agent_tools()
-    except Exception:
-        pass
-
-    print("Creating decision agent...")
-    agent = project_client.agents.create_agent(
-        model=API_DEPLOYMENT_NAME,
-        name="Decision Agent",
-        instructions=instructions,
-        temperature=0.0,
-        headers={"x-ms-enable-preview": "true"},
-    )
-    print(f"Created decision agent: {agent.id}")
-
-    thread = project_client.agents.threads.create()
-    print(f"Created decision thread: {thread.id}")
-
-    return agent, thread
-
-
 async def post_message(thread_id: str, content: str, agent: object, thread: object, timeout_seconds: int = 120) -> str:
-    """Post a message to the resolution agent and print the agent response.
+    """Post a message to the monitor agent and print the agent response.
 
     This is a lightweight variant that does not handle tool calls.
     """
     # -- Workflow implemented as requested (5 explicit steps) --
     try:
-        # Step 1: Input comes in (string from terminal)
+        # Step 1: Input comes in (log data from storage account)
         user_input = content
         print(f"Step 1: Received input: {user_input}")
 
