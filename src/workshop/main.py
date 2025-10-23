@@ -1,41 +1,37 @@
 import asyncio
+import os
 
+# Guard import of utils to avoid failing when Azure SDKs aren't installed.
+try:
+    from utils import project_client
+except Exception:
+    project_client = None
 
-from resolution_agent import create_agent_from_prompt, post_message as post_to_resolution_agent
-from utils import project_client, tc
+from incident_detection_agent import raise_incident_in_slack
 
 
 async def main() -> None:
-    """Create a simple resolution agent and run an interactive chat loop.
+    """Trigger the incident detection agent with a sample monitoring availability alert.
 
-    The resolution agent is created from the `resolution_agent_prompt.txt` file
-    and has no tools or database connections. You can type messages in the
-    terminal; type `exit` to quit.
+    Configure SLACK_BOT_TOKEN and SLACK_CHANNEL in your environment (see .env.example).
     """
-    # Use the project client within a context manager for the entire session
-    with project_client:
-        # Create resolution agent and thread from the resolution prompt
-        agent, thread = await create_agent_from_prompt()
+    alert_text = os.getenv(
+        "SAMPLE_ALERT",
+        "ALERT: service-x availability dropped below 90% at 2025-10-23T12:00:00Z",
+    )
 
-        try:
-            
-            print("\n")
-            resolution_agent_input = "my cpu is very high!!" # message for resolution agent
-            print("Input for resolution agent:", resolution_agent_input)
-            
-            resolution_agent_output = await post_to_resolution_agent(thread_id=thread.id, content=resolution_agent_input, agent=agent, thread=thread)
-            print("Resolution agent output:", resolution_agent_output)
-        finally:
-            # Cleanup the created agent
-            try:
-                project_client.agents.delete_agent(agent.id)
-                print(f"Deleted agent: {agent.id}")
-            except Exception as e:
-                print(f"Error deleting agent: {e}")
+    if project_client:
+        with project_client:
+            ticket = await raise_incident_in_slack(alert_text)
+    else:
+        ticket = await raise_incident_in_slack(alert_text)
+
+    print("Incident ticket result:")
+    print(ticket)
 
 
 if __name__ == "__main__":
-    print("Starting async program...")
+    print("Starting incident detection trigger...")
     asyncio.run(main())
-    print("Program finished.")
+    print("Finished.")
 

@@ -120,3 +120,40 @@ If you are interested in organizing a hackathon using this repository, check out
 
 - **Hackathon Infrastructure Setup Guide**: 🛠️ Learn how to set up the necessary Azure infrastructure for hosting a hackathon, including cost control policies and deployment scripts. [Read more here](infra/README.md).
 - **Cost Control Policies Guide**: 📊 Understand the cost control policies implemented to manage and monitor expenses during the hackathon. [Read more here](infra/policies/README.md).
+
+# SixthSenseAgents2 — Incident Detection Agent
+
+This repository contains an agent that receives monitoring availability alerts and raises incidents in Slack.
+
+What is included
+- `src/workshop/incident_detection_agent.py` — core agent implementation.
+- `src/workshop/main.py` — trigger script that calls the agent (guards `utils` import when Azure SDKs are absent).
+- `incident_detection_agent.py` — top-level wrapper to load the implementation for tests and top-level imports.
+- `tests/` — unit tests that mock Slack interactions.
+- `instructions/` — usage and testing READMEs.
+- `requirements.txt` — dependencies.
+- `.env.example` — example env variables.
+
+Quick start (using export)
+1. Create & activate a venv (optional):
+   - python3 -m venv .venv
+   - source .venv/bin/activate
+
+2. Install deps:
+   - python -m pip install --upgrade pip
+   - python -m pip install -r requirements.txt
+
+3. Export env variables:
+   - export SLACK_BOT_TOKEN="xoxb-...your-token..."
+   - export SLACK_CHANNEL="#incidents"
+
+4. Run the agent trigger:
+   - python3 src/workshop/main.py
+
+5. Run tests:
+   - pytest -q
+
+Notes
+- `main.py` uses a guarded import for `utils` to allow running without Azure SDKs installed.
+- Tests use `asyncio.run(...)` to run the async Slack function synchronously and monkeypatch the implementation's Slack client to avoid external calls.
+- Do not commit real tokens. Use `export` or a local `.env` file and keep it out of version control.
