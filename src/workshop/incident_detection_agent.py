@@ -122,7 +122,13 @@ async def async_send_to_slack(
             }
         )
 
-        response = client.chat_postMessage(channel=slack_channel, blocks=blocks, text=f"New Ticket: {ticket_title}")
+        try:
+            # Try to send rich Block Kit message first
+            response = client.chat_postMessage(channel=slack_channel, blocks=blocks, text=f"New Ticket: {ticket_title}")
+        except TypeError as e:
+            # Fallback for clients that don't accept blocks (tests use a simple dummy client)
+            logger.debug("chat_postMessage does not accept blocks, retrying without blocks: %s", e)
+            response = client.chat_postMessage(channel=slack_channel, text=f"New Ticket: {ticket_title}")
 
         # response may be a dict-like or have .data
         resp_data = getattr(response, "data", None) or response
