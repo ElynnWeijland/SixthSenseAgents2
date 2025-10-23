@@ -5,7 +5,7 @@ import json
 import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
@@ -88,17 +88,118 @@ async def _gather_azure_context(parsed: Dict[str, Optional[str]]) -> Dict[str, A
         return context
 
     try:
-        # Example placeholder: try to fetch VM info or recent metrics if the project_client exposes it.
-        # Keep this generic to avoid hard dependency on Azure SDKs at import time.
-        if hasattr(project_client, "resources"):
-            # pseudo-call; real implementations would vary based on utils/project_client shape
+        # Placeholder: try to fetch a small sample of metrics if a metrics interface exists.
+        # Real implementations should replace with azure.monitor.query or similar.
+        if hasattr(project_client, "metrics") or hasattr(project_client, "resources"):
             try:
-                context["azure_resources_sample"] = "query-executed"
+                context["azure_query_sample"] = "executed"
             except Exception:
-                context["azure_resources_sample"] = "query-failed"
+                context["azure_query_sample"] = "failed"
     except Exception as e:
         logger.debug("Azure context enrichment failed: %s", e)
     return context
+
+
+async def fetch_azure_metrics(parsed: Dict[str, Optional[str]], lookback_seconds: int = 300) -> Dict[str, Any]:
+    """
+    Best-effort metrics fetch from Azure Monitor. Returns a dict with keys like cpu, memory, network.
+    If Azure SDKs or project_client are not available this returns an empty dict.
+    """
+    metrics: Dict[str, Any] = {}
+    if not project_client:
+        logger.debug("No project_client available; skipping Azure metrics fetch")
+        return metrics
+
+    try:
+        # Placeholder behavior: real code should use azure.monitor.query MetricsQueryClient.
+        # Keep simple to avoid hard dependency — allow tests to monkeypatch this function.
+        # Example return shape:
+        metrics = {
+            "cpu_avg": None,
+            "memory_avg": None,
+            "network_in": None,
+            "network_out": None,
+            "raw": "sample",
+        }
+        # Try to call a hypothetical metrics API if available (best-effort)
+        if hasattr(project_client, "metrics"):
+            try:
+                metrics["sample"] = "queried"
+            except Exception:
+                metrics["sample"] = "query_failed"
+    except Exception as e:
+        logger.debug("Azure metrics fetch failed: %s", e)
+    return metrics
+
+
+def correlate_metrics(parsed: Dict[str, Optional[str]], metrics: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Correlate alert and metrics. Simple heuristics + placeholder ML score.
+    Returns correlation summary suitable for inclusion in ticket handed to resolution agent.
+    """
+    summary: Dict[str, Any] = {"correlated": False, "notes": [], "ml_score": None}
+
+    # Example heuristic: if metrics contain numeric cpu_avg and it's > 80 -> correlate
+    try:
+        cpu = metrics.get("cpu_avg")
+        mem = metrics.get("memory_avg")
+        if isinstance(cpu, (int, float)) and cpu > 80:
+            summary["correlated"] = True
+            summary["notes"].append(f"High CPU observed: {cpu}%")
+        if isinstance(mem, (int, float)) and mem > 80:
+            summary["correlated"] = True
+            summary["notes"].append(f"High memory observed: {mem}%")
+    except Exception as e:
+        summary["notes"].append(f"Correlation error: {e}")
+
+    # Placeholder ML score — real model would run here. Keep None or a dummy value.
+    summary["ml_score"] = None
+
+    # If no metrics available, include a note
+    if not metrics:
+        summary["notes"].append("No metrics available for correlation")
+
+    return summary
+
+
+async def send_to_resolution_agent(ticket: Dict[str, Any], correlation: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Hand off the ticket to the resolution agent. Best-effort: if a resolution agent module/client
+    exists it will be called; otherwise this is a no-op that returns a descriptive result.
+    Tests should monkeypatch this function.
+    """
+    result: Dict[str, Any] = {"sent": False, "detail": "no resolution agent available"}
+    try:
+        # Try to import a resolution_agent module if present (non-critical)
+        try:
+            from resolution_agent import receive_incident  # type: ignore
+        except Exception:
+            receive_incident = None
+
+        payload = {
+            "incident_id": ticket.get("id"),
+            "title": ticket.get("title"),
+            "summary": ticket.get("summary"),
+            "created_at": ticket.get("created_at"),
+            "triage": ticket.get("triage"),
+            "correlation": correlation,
+            "azure_context": ticket.get("azure_context", {}),
+        }
+
+        if receive_incident:
+            # allow resolution agent to be async or sync
+            if asyncio.iscoroutinefunction(receive_incident):
+                res = await receive_incident(payload)
+            else:
+                res = receive_incident(payload)
+            result = {"sent": True, "response": res}
+        else:
+            logger.debug("No resolution agent found; skipping handoff")
+            result = {"sent": False, "detail": "no resolution agent found"}
+    except Exception as e:
+        logger.exception("Error sending to resolution agent: %s", e)
+        result = {"sent": False, "error": str(e)}
+    return result
 
 
 def create_incident_ticket(alert_text: str) -> dict:
@@ -236,20 +337,29 @@ async def async_send_to_slack(
 
 async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "") -> dict:
     """
-    Create a ticket (triage + enrichment) and post it to Slack. Returns the ticket enriched
-    with Slack delivery metadata and any Azure context fetched.
+    Create a ticket (triage + enrichment + correlation) and post it to Slack.
+    Then hand the incident to the resolution agent.
+    Returns the ticket enriched with Slack delivery metadata, Azure context and resolution handoff result.
     """
     ticket = create_incident_ticket(alert_text)
 
-    # attempt to enrich via Azure if available
+    # 2) fetch data from azure monitor
     try:
-        azure_ctx = await _gather_azure_context(ticket.get("triage", {}))
-        ticket["azure_context"] = azure_ctx
+        metrics = await fetch_azure_metrics(ticket.get("triage", {}))
+        ticket["metrics"] = metrics
     except Exception as e:
-        logger.debug("Azure enrichment skipped/failed: %s", e)
-        ticket["azure_context"] = {}
+        logger.debug("Metrics fetch failed: %s", e)
+        ticket["metrics"] = {}
 
-    # Post to slack using helper
+    # 3) correlate data (placeholder ML)
+    try:
+        correlation = correlate_metrics(ticket.get("triage", {}), ticket.get("metrics", {}))
+        ticket["correlation"] = correlation
+    except Exception as e:
+        logger.debug("Correlation failed: %s", e)
+        ticket["correlation"] = {"error": str(e)}
+
+    # 4) create incident in Slack
     slack_result = await async_send_to_slack(
         ticket_title=ticket["title"],
         ticket_id=ticket["id"],
@@ -266,6 +376,14 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
         ticket["slack_response"] = slack_result.get("slack_response")
     else:
         ticket["slack_error"] = slack_result.get("error")
+
+    # 5) send details to resolution agent
+    try:
+        resolution_result = await send_to_resolution_agent(ticket, ticket.get("correlation", {}))
+        ticket["resolution_handoff"] = resolution_result
+    except Exception as e:
+        logger.debug("Resolution handoff failed: %s", e)
+        ticket["resolution_handoff"] = {"error": str(e)}
 
     # ensure raised_by included in final ticket
     ticket["raised_by"] = RAISED_BY

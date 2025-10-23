@@ -35,10 +35,19 @@ def test_raise_incident_in_slack_monkeypatch(monkeypatch):
     async def _fake_send_to_slack(*args, **kwargs):
         return DummySlackResult()
 
-    # Patch the implementation module's async_send_to_slack so no Slack calls occur
+    async def _fake_fetch_metrics(*args, **kwargs):
+        return {"cpu_avg": 85, "memory_avg": 40}
+
+    async def _fake_send_to_resolution_agent(ticket, correlation):
+        return {"sent": True, "note": "received"}
+
+    # Patch the implementation functions on the loaded impl module
     monkeypatch.setattr(ida._impl, "async_send_to_slack", _fake_send_to_slack, raising=False)
+    monkeypatch.setattr(ida._impl, "fetch_azure_metrics", _fake_fetch_metrics, raising=False)
+    monkeypatch.setattr(ida._impl, "send_to_resolution_agent", _fake_send_to_resolution_agent, raising=False)
 
     ticket = asyncio.run(raise_incident_in_slack("test alert for unit"))
     assert ticket["status"] == "open"
     assert ticket.get("slack_ts") == "999.888"
     assert ticket.get("slack_channel") == "#incidents-test"
+    assert ticket.get("resolution_handoff", {}).get("sent") is True
