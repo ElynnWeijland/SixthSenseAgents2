@@ -1,40 +1,30 @@
 # Testing the Incident Detection Agent
 
 Overview
-- Unit tests run with `pytest` and avoid real Slack network calls by monkeypatching the implementation's Slack client.
-- Tests import the top-level wrapper `incident_detection_agent` so they can run from the repo root.
-- Async functions are executed with `asyncio.run(...)` in tests — no pytest-asyncio plugin required.
+- Unit tests are designed to avoid calling real Slack APIs.
+- Tests import through the top-level shim (`incident_detection_agent.py`) and monkeypatch the implementation (`_impl`) functions.
 
 Setup
-1. (Optional) Create & activate venv:
+1. Optional venv:
    - python3 -m venv .venv
    - source .venv/bin/activate
 
-2. Install dependencies:
+2. Install deps:
    - python -m pip install --upgrade pip
    - python -m pip install -r requirements.txt
 
-Testing (export approach)
-- Set test env vars in the shell (tests also use monkeypatch):
-  - export SLACK_BOT_TOKEN="xoxb-fake-or-real-token"
-  - export SLACK_CHANNEL="#incidents-test"
+3. Export (optional) Slack env vars for manual runs:
+   - export SLACK_BOT_TOKEN="xoxb-fake-or-real-token"
+   - export SLACK_CHANNEL="#incidents-test"
 
-What the tests cover
-- `create_incident_ticket` returns expected ticket fields.
-- `raise_incident_in_slack` is tested by patching the implementation module's `WebClient` so no network calls occur.
-- Tests run the async function synchronously with `asyncio.run(...)`.
+How tests work
+- tests/conftest.py ensures repo root is on sys.path.
+- tests/test_incident_detection_agent.py:
+  - Verifies create_incident_ticket returns expected fields.
+  - Monkeypatches the implementation's async_send_to_slack to return a deterministic result, then calls raise_incident_in_slack via asyncio.run(...) to validate integration.
 
 Run tests
-- From repo root:
-  - pytest -q
-- To run a single test file:
-  - pytest -q tests/test_incident_detection_agent.py
+- pytest -q
 
 Integration note
-- To run integration flows that use Azure AI Agents and/or post to Slack:
-  - Install Azure SDK packages and configure `utils.py` (project client, endpoints, credentials).
-  - Export real `SLACK_BOT_TOKEN` and `SLACK_CHANNEL` (or use a properly configured `.env`).
-  - Running `python3 src/workshop/main.py` may create posts in Slack and/or invoke Azure agent runs.
-
-Security
-- Tests avoid hitting Slack. Never store real tokens in source control.
+- To run an integration flow that posts to Slack, export real SLACK_BOT_TOKEN and SLACK_CHANNEL and call the main trigger. Be mindful that this will post messages.

@@ -36,3 +36,29 @@ Azure agent-driven ticketing
 
 Security
 - Do not commit real tokens or `.env` containing secrets. Use shell `export` for local runs or secure secret storage in CI.
+
+Incident Detection Agent — Details
+
+Purpose
+- Triage incoming monitoring availability alerts and create incidents in Slack with structured context.
+- Prepare a handoff package for the Resolution Agent including triage fields and optional Azure context.
+
+Key functions (src/workshop/incident_detection_agent.py)
+- create_incident_ticket(alert_text: str) -> dict
+  - Pure function performing lightweight triage (service, region, severity, timestamp) and creating ticket metadata.
+- raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "") -> dict (async)
+  - Enriches ticket (optional Azure queries), posts to Slack using Block Kit, and returns ticket merged with Slack delivery metadata.
+- async_send_to_slack(...) -> dict (async)
+  - Formats and posts a Block Kit Slack message; returns delivery metadata. Falls back to plain text if the Slack client doesn't accept blocks (useful for tests).
+
+Configuration
+- Use shell export to set required Slack variables:
+  - export SLACK_BOT_TOKEN="xoxb-..."
+  - export SLACK_CHANNEL="#incidents"
+
+Running
+- python3 src/workshop/main.py
+
+Notes
+- Azure enrichment is best-effort and logged on failure; Azure SDKs are not required for basic Slack ticketing.
+- Tests mock async_send_to_slack to avoid network calls.

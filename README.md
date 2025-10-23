@@ -1,45 +1,53 @@
 # SixthSenseAgents2 — Incident Detection Agent
 
-This repository contains an agent that receives monitoring availability alerts and raises incidents in Slack.
+This repository contains a set of cooperating agents to detect, triage, resolve, report, and quantify the impact of infrastructure incidents.
 
-What is included
-- `src/workshop/incident_detection_agent.py` — core agent implementation (creates tickets, posts to Slack, optional Azure-agent-driven ticketing flow).
-- `src/workshop/main.py` — trigger script that calls the agent (guards `utils` import when Azure SDKs are absent).
-- `incident_detection_agent.py` — top-level wrapper to load the implementation for tests and top-level imports.
-- `tests/` — unit tests that mock Slack interactions.
-- `instructions/` — usage and testing READMEs.
-- `requirements.txt` — dependencies.
-- `.env.example` — example env variables.
+High level agents
+- Monitoring Agent
+  - Ingests monitoring availability alerts and forwards structured alerts to downstream agents.
+  - Input: availability alerts (service, region, timestamp, metric values).
+  - Not fully implemented in this repo — integration points expected in your monitoring pipeline.
 
-Key functionality
-- Local Slack posting: `raise_incident_in_slack(alert_text)` posts a formatted message to Slack and returns ticket metadata.
-- Agent-driven ticketing (optional): `create_agent_from_prompt`, `post_message`, `create_and_send_ticket` let you use Azure AI Agents to generate ticket content and call `async_send_to_slack`. These require the Azure project client and related SDKs (see `utils.py`).
+- Incident Detection Agent
+  - Receives availability alerts, triages (extracts service, region, severity, timestamp), optionally enriches via Azure, and creates an incident in Slack.
+  - Posts a rich Block Kit message to the configured Slack channel and returns ticket metadata.
+  - Implementation: `src/workshop/incident_detection_agent.py` (pure triage + optional Azure enrichment + Slack poster).
+  - Top-level import shim for tests: `/workspaces/SixthSenseAgents2/incident_detection_agent.py`
+  - Trigger script: `src/workshop/main.py`
 
-Environment variables (preferred: export)
-- export SLACK_BOT_TOKEN="xoxb-...your-token..."
-- export SLACK_CHANNEL="#incidents"
-- Optional: export SAMPLE_ALERT to override the sample alert used by `main.py`.
+- Resolution Agent
+  - Searches logs, runbooks, KBs, and proposes remediation steps. It can attempt automated remediation or escalate when needed.
+  - Integrates with the incident ticketing flow and Slack helpers.
 
-Quick start (using export)
-1. Create & activate a venv (optional):
+- Reporting Agent
+  - Posts updates to the ticket (status, timeline, resolution) and synchronizes with a backend ticketing system if configured.
+
+- Benefits Agent
+  - Calculates financial and operational benefits of prevented outages (estimated revenue preserved, SLA credits avoided, productivity impact).
+  - Produces a concise benefits report to attach to incident summaries.
+
+Running locally
+1. Optional: create a venv and activate it:
    - python3 -m venv .venv
    - source .venv/bin/activate
 
-2. Install deps:
+2. Install dependencies:
    - python -m pip install --upgrade pip
    - python -m pip install -r requirements.txt
 
-3. Export env variables:
-   - export SLACK_BOT_TOKEN="xoxb-...your-token..."
+3. Export required Slack env vars:
+   - export SLACK_BOT_TOKEN="xoxb-...your-bot-token..."
    - export SLACK_CHANNEL="#incidents"
 
-4. Run the agent trigger:
+4. Trigger the incident detection agent:
    - python3 src/workshop/main.py
 
-5. Run tests:
-   - pytest -q
+Testing
+- Tests mock Slack interactions and run synchronously via `asyncio.run(...)`.
+- Run:
+  - pytest -q
 
 Notes
-- `main.py` guards import of `utils` so the script runs without Azure SDKs installed. To use Azure-driven ticketing flows, install Azure SDK packages and configure values in `utils.py` / environment.
-- Tests monkeypatch the implementation's Slack client to avoid network calls. Integration runs that actually post to Slack will send messages to the configured channel.
-- Never commit real tokens. Use `export` or a local `.env` kept out of version control.
+- `src/workshop/main.py` contains a guarded import of `utils` so core Slack-only flows run without Azure SDKs installed.
+- Azure-driven workflows require Azure SDK installation and `utils.py` configuration (project endpoint, credentials).
+- Do not commit real tokens. Use shell export or secure secret management.
