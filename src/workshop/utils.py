@@ -3,6 +3,7 @@ from datetime import date
 import logging
 import os
 import time
+from typing import Optional
 
 from azure.ai.projects import AIProjectClient
 from azure.ai.agents import AgentsClient
@@ -42,7 +43,7 @@ sales_data = SalesData()
 utilities = Utilities()
 
 
-async def async_reboot_vm(resource_group: str, vm_name: str, subscription_id: str | None = None) -> dict:
+async def async_reboot_vm(resource_group: str, vm_name: str, subscription_id: Optional[str] = None) -> dict:
     """Restart an Azure VM using the Azure Compute SDK.
 
     This function runs the blocking SDK call inside a thread with

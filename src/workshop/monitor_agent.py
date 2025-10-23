@@ -2,7 +2,7 @@ import os
 import time
 import asyncio
 import logging
-from typing import Tuple
+from typing import Tuple, Optional
 
 from azure.ai.agents.models import MessageRole
 
@@ -41,7 +41,7 @@ async def async_llm_decide(user_input: str) -> str:
     return "escalate"
 
 
-async def create_agent_from_prompt(prompt_path: str | None = None) -> Tuple[object, object]:
+async def create_agent_from_prompt(prompt_path: Optional[str] = None) -> Tuple[object, object]:
     """Create an Azure AI Agent using a plain prompt (no tools, no DB).
 
     Args:
