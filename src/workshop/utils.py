@@ -18,31 +18,20 @@ from azure.ai.agents.models import (
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 
-# Support both package-style imports (when running as `-m src.workshop.main`)
-# and script-style imports (when running `python src/workshop/main.py`).
-try:
-    # When imported as a package: src.workshop.utils
-    from .sales_data import SalesData
-    from .terminal_colors import TerminalColors as tc
-    from .utilities import Utilities
-except Exception:
-    # When imported as a script/module from the same folder
-    from sales_data import SalesData
-    from terminal_colors import TerminalColors as tc
-    from utilities import Utilities
+from sales_data import SalesData
+from terminal_colors import TerminalColors as tc
+from utilities import Utilities
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-TENTS_DATA_SHEET_FILE = "datasheet/contoso-tents-datasheet.pdf"
 API_DEPLOYMENT_NAME = os.getenv("AGENT_MODEL_DEPLOYMENT_NAME")
 PROJECT_ENDPOINT = os.environ["PROJECT_ENDPOINT"]
 AZURE_SUBSCRIPTION_ID = os.environ["AZURE_SUBSCRIPTION_ID"]
 AZURE_RESOURCE_GROUP_NAME = os.environ["AZURE_RESOURCE_GROUP_NAME"]
 AZURE_PROJECT_NAME = os.environ["AZURE_PROJECT_NAME"]
-BING_CONNECTION_NAME = os.getenv("BING_CONNECTION_NAME")
 MAX_COMPLETION_TOKENS = 4096
 MAX_PROMPT_TOKENS = 10240
 TEMPERATURE = 0.1
@@ -51,6 +40,33 @@ TOP_P = 0.1
 toolset = AsyncToolSet()
 sales_data = SalesData()
 utilities = Utilities()
+
+
+async def async_reboot_vm(resource_group: str, vm_name: str, subscription_id: str | None = None) -> dict:
+    """Restart an Azure VM using the Azure Compute SDK.
+
+    This function runs the blocking SDK call inside a thread with
+    asyncio.to_thread so it can be registered as an AsyncFunctionTool.
+    """
+    subscription = subscription_id or AZURE_SUBSCRIPTION_ID
+
+    def _restart():
+        try:
+            # Import here so the module import doesn't fail when the SDK is not installed
+            from azure.mgmt.compute import ComputeManagementClient
+        except Exception as e:
+            raise RuntimeError(
+                "Missing dependency 'azure-mgmt-compute'. Install it in your venv with: pip install azure-mgmt-compute"
+            ) from e
+
+        cred = DefaultAzureCredential()
+        compute_client = ComputeManagementClient(cred, subscription)
+        # begin_restart returns a poller
+        poller = compute_client.virtual_machines.begin_restart(resource_group_name=resource_group, vm_name=vm_name)
+        poller.result()
+        return {"status": "restarted", "resource_group": resource_group, "vm_name": vm_name}
+
+    return await asyncio.to_thread(_restart)
 
 # Project client initialization (outside the context manager for global access)
 try:
@@ -86,11 +102,37 @@ functions = AsyncFunctionTool(
     }
 )
 
+# Reboot tool wrapper
+reboot_tool = AsyncFunctionTool(
+    {
+        async_reboot_vm,
+    }
+)
+
 INSTRUCTIONS_FILE = "../instructions/resolution_agent_prompt.txt"
 
 
 async def add_agent_tools() -> None:
-    """Add tools for the agent (kept minimal and safe by default)."""
+    """Add configured tools to the global toolset used when creating agents.
+
+    This registers the function-based tools so the agent can call them.
+    """
+    # Add any existing function tools
+    try:
+        toolset.add(functions)
+    except Exception:
+        # ignore if already added or unsupported
+        pass
+
+    # Add reboot tool
+    try:
+        toolset.add(reboot_tool)
+    except Exception:
+        pass
+
+
+# async def add_agent_tools() -> None:
+#     """Add tools for the agent (kept minimal and safe by default)."""
 
     # Add the functions tool (uncomment to enable automatic function tool usage)
     # toolset.add(functions)
