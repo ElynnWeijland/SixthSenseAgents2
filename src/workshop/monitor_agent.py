@@ -238,11 +238,9 @@ async def create_agent_from_prompt(prompt_path: str | None = None) -> Tuple[obje
     with open(prompt_path, "r", encoding="utf-8", errors="ignore") as f:
         instructions = f.read()
 
-    # Add tools configured in utils (e.g., reboot tool). If this fails, continue.
-    try:
-        await add_agent_tools()
-    except Exception:
-        logger.debug("add_agent_tools failed or not applicable; continuing without additional tools", exc_info=True)
+    # Note: Monitor agent doesn't need additional tools (sales data, reboot, etc.)
+    # These are only used by other agents (resolution agent, etc.)
+    # Skipping add_agent_tools() to keep the monitor agent lightweight
 
     logger.info("Creating monitor agent...")
     agent = project_client.agents.create_agent(
