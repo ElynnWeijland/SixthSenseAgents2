@@ -250,13 +250,22 @@ async def main() -> None:
 
                     # Show metrics information
                     metrics = incident_result.get('metrics', {})
-                    if metrics and metrics.get('status') == 'success':
-                        print(f"  Azure Metrics:")
-                        if metrics.get('cpu_max') is not None:
-                            print(f"    - CPU: {metrics.get('cpu_max')}%")
-                        if metrics.get('memory_max') is not None:
-                            mem_gb = metrics.get('memory_max') / (1024**3)
-                            print(f"    - Memory: {mem_gb:.2f}GB")
+                    if metrics:
+                        metrics_status = metrics.get('status', 'unknown')
+                        print(f"  Azure Metrics Status: {metrics_status}")
+
+                        if metrics_status == 'success':
+                            print(f"  Azure Metrics:")
+                            if metrics.get('cpu_max') is not None:
+                                print(f"    - CPU: {metrics.get('cpu_max')}%")
+                            if metrics.get('memory_max') is not None:
+                                mem_gb = metrics.get('memory_max') / (1024**3)
+                                print(f"    - Memory: {mem_gb:.2f}GB")
+                        else:
+                            # Show error details if metrics fetch failed
+                            if metrics.get('error'):
+                                print(f"  Metrics Error: {metrics.get('error')}")
+                            print(f"  Raw Metrics: {metrics}")
 
                     ticket_id = incident_result.get('ticket_id')
 
