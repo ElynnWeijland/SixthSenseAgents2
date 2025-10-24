@@ -4,7 +4,7 @@ import uuid
 import json
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, Tuple
 from zoneinfo import ZoneInfo
 
@@ -16,6 +16,14 @@ try:
     SLACK_AVAILABLE = True
 except Exception:
     SLACK_AVAILABLE = False
+
+try:
+    from azure.identity import ChainedTokenCredential, EnvironmentCredential, InteractiveBrowserCredential
+    import httpx
+    AZURE_MONITOR_AVAILABLE = True
+except Exception as e:
+    AZURE_MONITOR_AVAILABLE = False
+    logger.debug(f"Azure Monitor dependencies not available: {e}")
 
 # utils may provide project_client and helper constants; import if available but do not require it
 try:
@@ -43,6 +51,239 @@ def _validate_env() -> tuple[str, str]:
     if not channel:
         raise EnvironmentError(f"Missing environment variable: {SLACK_CHANNEL_ENV}")
     return bot_token, channel
+
+
+def _get_azure_credential():
+    """Get Azure credential using ChainedTokenCredential with multiple fallback methods."""
+    try:
+        credential = ChainedTokenCredential(
+            EnvironmentCredential(),
+            InteractiveBrowserCredential(),
+        )
+        return credential
+    except Exception as e:
+        logger.warning(f"Failed to create Azure credential: {e}")
+        return None
+
+
+def _construct_vm_resource_id(vm_name: str, subscription_id: str = None, resource_group: str = None) -> str:
+    """
+    Construct the full resource ID for an Azure VM.
+
+    Format: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}
+    """
+    if not subscription_id:
+        subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+    if not resource_group:
+        resource_group = os.getenv("AZURE_RESOURCE_GROUP_NAME")
+
+    if not subscription_id or not resource_group:
+        logger.warning("Missing AZURE_SUBSCRIPTION_ID or AZURE_RESOURCE_GROUP_NAME in environment")
+        return None
+
+    resource_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Compute/virtualMachines/{vm_name}"
+    return resource_id
+
+
+async def fetch_azure_monitor_metrics(
+    vm_name: str,
+    detection_time: str = None,
+    lookback_minutes: int = 60,
+    lookahead_minutes: int = 10
+) -> Dict[str, Any]:
+    """
+    Fetch real metrics from Azure Monitor for a specific VM.
+
+    Parameters:
+    - vm_name: Name of the virtual machine
+    - detection_time: ISO8601 timestamp when the issue was detected (defaults to now)
+    - lookback_minutes: How many minutes before detection time to query
+    - lookahead_minutes: How many minutes after detection time to query
+
+    Returns:
+    - Dictionary with metrics data (CPU, Memory, Network, Disk)
+    """
+    metrics: Dict[str, Any] = {
+        "cpu_max": None,
+        "memory_max": None,
+        "network_in_max": None,
+        "network_out_max": None,
+        "disk_read_max": None,
+        "disk_write_max": None,
+        "raw_data": [],
+        "status": "not_fetched"
+    }
+
+    if not AZURE_MONITOR_AVAILABLE:
+        logger.debug("Azure Monitor dependencies not available")
+        metrics["status"] = "azure_monitor_unavailable"
+        return metrics
+
+    try:
+        # Parse detection time or use current time
+        if detection_time:
+            try:
+                detection_dt = datetime.fromisoformat(detection_time.replace('Z', '+00:00'))
+            except Exception:
+                detection_dt = datetime.now(timezone.utc)
+        else:
+            detection_dt = datetime.now(timezone.utc)
+
+        # Calculate time range
+        start_time = detection_dt - timedelta(minutes=lookback_minutes)
+        end_time = detection_dt + timedelta(minutes=lookahead_minutes)
+
+        logger.info(f"Querying Azure Monitor for VM '{vm_name}'")
+        logger.info(f"Time range: {start_time} to {end_time}")
+
+        # Get resource ID
+        resource_id = _construct_vm_resource_id(vm_name)
+        if not resource_id:
+            metrics["status"] = "resource_id_construction_failed"
+            return metrics
+
+        logger.debug(f"Resource ID: {resource_id}")
+
+        # Get subscription ID for client
+        subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+        if not subscription_id:
+            logger.error("AZURE_SUBSCRIPTION_ID not set")
+            metrics["status"] = "subscription_id_missing"
+            return metrics
+
+        # Create credentials
+        credential = _get_azure_credential()
+        if not credential:
+            metrics["status"] = "credential_failed"
+            return metrics
+
+        # Map of metric names to their storage keys
+        # These are Platform Metrics from "Virtual Machine Host" namespace
+        metrics_to_query = {
+            "Percentage CPU": "cpu_max",
+            "Available Memory Bytes": "memory_max",
+            "Network In Total": "network_in_max",
+            "Network Out Total": "network_out_max",
+            "Disk Read Bytes": "disk_read_max",
+            "Disk Write Bytes": "disk_write_max",
+        }
+
+        # Format timespan in ISO 8601 format
+        start_str = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        end_str = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        timespan_str = f"{start_str}/{end_str}"
+
+        logger.debug(f"Timespan: {timespan_str}")
+
+        try:
+            # Get access token for REST API
+            access_token = credential.get_token("https://management.azure.com/.default").token
+
+            # Azure Monitor REST API endpoint
+            api_url = f"https://management.azure.com{resource_id}/providers/microsoft.insights/metrics"
+
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+
+            # Query parameters for REST API
+            params = {
+                "api-version": "2018-01-01",
+                "timespan": timespan_str,
+                "interval": "PT5M",  # 5 minute intervals
+                "aggregation": "Maximum",  # Get maximum values as requested
+                "metricnames": ",".join(metrics_to_query.keys()),  # Join all metric names
+            }
+
+            logger.debug(f"API URL: {api_url}")
+            logger.debug(f"API params: {params}")
+
+            # Make REST API call
+            async with httpx.AsyncClient() as client:
+                response = await client.get(api_url, headers=headers, params=params)
+
+                logger.debug(f"API response status: {response.status_code}")
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    if "value" in data and data["value"]:
+                        logger.info(f"Got {len(data['value'])} metrics from Azure Monitor")
+
+                        for metric in data["value"]:
+                            metric_name = metric.get("name", {}).get("value", "Unknown")
+                            logger.debug(f"Processing metric: {metric_name}")
+
+                            # Get timeseries data
+                            timeseries = metric.get("timeseries", [])
+                            if timeseries:
+                                for ts in timeseries:
+                                    data_points = ts.get("data", [])
+                                    if data_points:
+                                        # Find maximum value
+                                        max_val = None
+                                        for dp in data_points:
+                                            if "maximum" in dp and dp["maximum"] is not None:
+                                                if max_val is None or dp["maximum"] > max_val:
+                                                    max_val = dp["maximum"]
+
+                                        # Store metric by name
+                                        if max_val is not None:
+                                            for query_name, storage_key in metrics_to_query.items():
+                                                if query_name.lower() in metric_name.lower():
+                                                    metrics[storage_key] = max_val
+                                                    logger.debug(f"Stored {metric_name}: {max_val} in {storage_key}")
+                                                    break
+
+                                        metric_info = {
+                                            "name": metric_name,
+                                            "unit": metric.get("unit", "Unknown"),
+                                            "max": max_val,
+                                            "data_points": len(data_points)
+                                        }
+                                        metrics["raw_data"].append(metric_info)
+
+                        metrics["status"] = "success"
+                        logger.info(f"Successfully fetched metrics for VM '{vm_name}'")
+                    else:
+                        metrics["status"] = "no_data_returned"
+                        metrics["error"] = "Azure Monitor returned no metrics data"
+                        logger.warning("No metrics data returned from Azure Monitor")
+
+                elif response.status_code == 400:
+                    logger.error(f"Bad request: {response.text}")
+                    metrics["status"] = "bad_request"
+                    metrics["error"] = "Bad request to Azure Monitor API"
+
+                elif response.status_code == 401:
+                    logger.error("Unauthorized - Azure authentication failed")
+                    metrics["status"] = "auth_failed"
+                    metrics["error"] = "Azure authentication failed"
+
+                elif response.status_code == 404:
+                    logger.error(f"VM not found: {resource_id}")
+                    metrics["status"] = "vm_not_found"
+                    metrics["error"] = f"VM '{vm_name}' not found"
+
+                else:
+                    logger.error(f"API error: {response.status_code}")
+                    metrics["status"] = "api_error"
+                    metrics["error"] = f"Azure Monitor API error: {response.status_code}"
+
+                return metrics
+
+        except Exception as e:
+            logger.error(f"Error making REST API call: {e}")
+            metrics["status"] = "api_call_failed"
+            metrics["error"] = str(e)
+            return metrics
+
+    except Exception as e:
+        logger.error(f"Error fetching Azure Monitor metrics: {e}")
+        metrics["status"] = "error"
+        metrics["error"] = str(e)
+        return metrics
 
 
 def _parse_alert(alert_text: str) -> Dict[str, Optional[str]]:
@@ -100,64 +341,122 @@ async def _gather_azure_context(parsed: Dict[str, Optional[str]]) -> Dict[str, A
     return context
 
 
-async def fetch_azure_metrics(parsed: Dict[str, Optional[str]], lookback_seconds: int = 300) -> Dict[str, Any]:
+async def fetch_azure_metrics(
+    parsed: Dict[str, Optional[str]],
+    lookback_seconds: int = 300,
+    vm_name: str = "VirtualMachine"
+) -> Dict[str, Any]:
     """
-    Best-effort metrics fetch from Azure Monitor. Returns a dict with keys like cpu, memory, network.
-    If Azure SDKs or project_client are not available this returns an empty dict.
+    Fetch metrics from Azure Monitor for a VM.
+
+    Parameters:
+    - parsed: Dictionary with service/region info from alert parsing
+    - lookback_seconds: Fallback for time calculation (converted to minutes)
+    - vm_name: Name of the VM to query metrics for (default: "VirtualMachine")
+
+    Returns:
+    - Dictionary with metrics data (cpu_max, memory_max, network_in_max, etc.)
     """
-    metrics: Dict[str, Any] = {}
-    if not project_client:
-        logger.debug("No project_client available; skipping Azure metrics fetch")
+    try:
+        # Extract timestamp from parsed alert if available
+        detection_time = parsed.get("timestamp")
+        lookback_minutes = max(1, lookback_seconds // 60)  # Convert seconds to minutes, min 1
+
+        logger.info(f"Fetching Azure Monitor metrics for VM: {vm_name}")
+
+        # Call the real Azure Monitor metrics fetcher
+        metrics = await fetch_azure_monitor_metrics(
+            vm_name=vm_name,
+            detection_time=detection_time,
+            lookback_minutes=lookback_minutes
+        )
+
         return metrics
 
-    try:
-        # Placeholder behavior: real code should use azure.monitor.query MetricsQueryClient.
-        # Keep simple to avoid hard dependency — allow tests to monkeypatch this function.
-        # Example return shape:
-        metrics = {
-            "cpu_avg": None,
-            "memory_avg": None,
-            "network_in": None,
-            "network_out": None,
-            "raw": "sample",
-        }
-        # Try to call a hypothetical metrics API if available (best-effort)
-        if hasattr(project_client, "metrics"):
-            try:
-                metrics["sample"] = "queried"
-            except Exception:
-                metrics["sample"] = "query_failed"
     except Exception as e:
-        logger.debug("Azure metrics fetch failed: %s", e)
-    return metrics
+        logger.error(f"Azure metrics fetch failed: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "cpu_max": None,
+            "memory_max": None,
+            "network_in_max": None,
+            "network_out_max": None,
+        }
 
 
 def correlate_metrics(parsed: Dict[str, Optional[str]], metrics: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Correlate alert and metrics. Simple heuristics + placeholder ML score.
+    Correlate alert and metrics using Azure Monitor data.
     Returns correlation summary suitable for inclusion in ticket handed to resolution agent.
     """
     summary: Dict[str, Any] = {"correlated": False, "notes": [], "ml_score": None}
 
-    # Example heuristic: if metrics contain numeric cpu_avg and it's > 80 -> correlate
-    try:
-        cpu = metrics.get("cpu_avg")
-        mem = metrics.get("memory_avg")
-        if isinstance(cpu, (int, float)) and cpu > 80:
-            summary["correlated"] = True
-            summary["notes"].append(f"High CPU observed: {cpu}%")
-        if isinstance(mem, (int, float)) and mem > 80:
-            summary["correlated"] = True
-            summary["notes"].append(f"High memory observed: {mem}%")
-    except Exception as e:
-        summary["notes"].append(f"Correlation error: {e}")
-
-    # Placeholder ML score — real model would run here. Keep None or a dummy value.
-    summary["ml_score"] = None
-
-    # If no metrics available, include a note
     if not metrics:
         summary["notes"].append("No metrics available for correlation")
+        return summary
+
+    try:
+        # Check metrics status
+        status = metrics.get("status")
+        if status == "error":
+            summary["notes"].append(f"Metrics fetch error: {metrics.get('error')}")
+            return summary
+        elif status == "azure_monitor_unavailable":
+            summary["notes"].append("Azure Monitor Query client not available")
+            return summary
+        elif status != "success":
+            summary["notes"].append(f"Metrics status: {status}")
+            return summary
+
+        # Correlate based on maximum values from Azure Monitor
+        cpu_max = metrics.get("cpu_max")
+        memory_max = metrics.get("memory_max")
+        network_in_max = metrics.get("network_in_max")
+        network_out_max = metrics.get("network_out_max")
+        disk_read_max = metrics.get("disk_read_max")
+        disk_write_max = metrics.get("disk_write_max")
+
+        # Heuristics for correlation
+        if isinstance(cpu_max, (int, float)) and cpu_max > 80:
+            summary["correlated"] = True
+            summary["notes"].append(f"High CPU peak observed: {cpu_max:.1f}%")
+
+        if isinstance(memory_max, (int, float)):
+            # Memory bytes to percentage (assuming 8GB = 8589934592 bytes as reference)
+            memory_gb = memory_max / (1024 ** 3) if memory_max > 1024 else memory_max
+            if memory_max > 1000000000:  # > 1GB absolute bytes
+                summary["correlated"] = True
+                summary["notes"].append(f"High memory usage observed: {memory_gb:.1f}GB")
+
+        if isinstance(network_in_max, (int, float)) and network_in_max > 1000000000:  # > 1GB
+            summary["correlated"] = True
+            summary["notes"].append(f"High network inbound: {network_in_max / (1024**3):.2f}GB")
+
+        if isinstance(network_out_max, (int, float)) and network_out_max > 1000000000:  # > 1GB
+            summary["correlated"] = True
+            summary["notes"].append(f"High network outbound: {network_out_max / (1024**3):.2f}GB")
+
+        if isinstance(disk_read_max, (int, float)) and disk_read_max > 100000000:  # > 100MB
+            summary["notes"].append(f"High disk read activity: {disk_read_max / (1024**2):.1f}MB")
+
+        if isinstance(disk_write_max, (int, float)) and disk_write_max > 100000000:  # > 100MB
+            summary["notes"].append(f"High disk write activity: {disk_write_max / (1024**2):.1f}MB")
+
+        # Include metrics summary
+        summary["metrics_summary"] = {
+            "cpu_max_percent": cpu_max,
+            "memory_max_bytes": memory_max,
+            "network_in_max_bytes": network_in_max,
+            "network_out_max_bytes": network_out_max,
+        }
+
+    except Exception as e:
+        logger.error(f"Correlation error: {e}")
+        summary["notes"].append(f"Correlation error: {e}")
+
+    # Placeholder ML score
+    summary["ml_score"] = 0.65 if summary["correlated"] else 0.3
 
     return summary
 
@@ -377,15 +676,160 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
     else:
         ticket["slack_error"] = slack_result.get("error")
 
-    # 5) send details to resolution agent
-    try:
-        resolution_result = await send_to_resolution_agent(ticket, ticket.get("correlation", {}))
-        ticket["resolution_handoff"] = resolution_result
-    except Exception as e:
-        logger.debug("Resolution handoff failed: %s", e)
-        ticket["resolution_handoff"] = {"error": str(e)}
-
     # ensure raised_by included in final ticket
     ticket["raised_by"] = RAISED_BY
 
     return ticket
+
+
+async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> Dict[str, Any]:
+    """
+    Process an incident from monitoring agent JSON output.
+
+    Expected JSON format (from monitor_agent):
+    {
+        "status": "abnormality_detected",
+        "title": "Performance Degradation Detected",
+        "short_description": "Gradually increasing response times observed...",
+        "detection_time": "2025-10-21T17:07:00+02:00",
+        "application_name": "AppZwaagdijk",
+        "related_log_lines": [...],
+        "timestamp_detected": "2025-10-24T11:59:24.577368"
+    }
+
+    Parameters:
+    - monitoring_json: Dict or JSON string from monitor_agent output
+
+    Returns:
+    - Full incident ticket with Slack delivery status and metrics correlation
+    - Returns error dict if validation fails
+    """
+
+    # Parse JSON string to dict if needed
+    if isinstance(monitoring_json, str):
+        try:
+            data = json.loads(monitoring_json)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse monitoring JSON: {e}")
+            return {
+                "status": "error",
+                "error": "Invalid JSON input",
+                "detail": str(e)
+            }
+    else:
+        data = monitoring_json
+
+    # Validate required fields
+    required_fields = [
+        "status",
+        "title",
+        "short_description",
+        "detection_time",
+        "application_name",
+        "related_log_lines",
+    ]
+
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        logger.error(f"Missing required fields in monitoring input: {missing_fields}")
+        return {
+            "status": "error",
+            "error": "Invalid monitoring input",
+            "detail": f"Missing required fields: {missing_fields}",
+            "expected_format": {
+                "status": "abnormality_detected|healthy|error",
+                "title": "string",
+                "short_description": "string",
+                "detection_time": "ISO8601 timestamp",
+                "application_name": "string",
+                "related_log_lines": "array of strings",
+                "timestamp_detected": "ISO8601 timestamp (optional)"
+            }
+        }
+
+    # Check if monitoring detected abnormalities
+    if data.get("status") != "abnormality_detected":
+        logger.info(f"Monitoring status is '{data.get('status')}', no incident to process")
+        return {
+            "status": "no_incident",
+            "message": "Monitoring reported no abnormalities",
+            "monitoring_status": data.get("status"),
+            "application_name": data.get("application_name")
+        }
+
+    # Extract monitoring data
+    title = data.get("title")
+    short_description = data.get("short_description")
+    detection_time = data.get("detection_time")
+    application_name = data.get("application_name")
+    related_log_lines = data.get("related_log_lines", [])
+
+    logger.info(f"Processing incident from monitoring: {application_name} - {title}")
+    logger.debug(f"Detection time: {detection_time}")
+    logger.debug(f"Related log lines: {len(related_log_lines)} lines")
+
+    # Construct alert text from monitoring data
+    alert_text = f"{title}\n{short_description}\nDetection Time: {detection_time}\nApplication: {application_name}"
+    if related_log_lines:
+        alert_text += f"\n\nRelated Log Lines:\n" + "\n".join(related_log_lines)
+
+    # Determine severity from title and description
+    severity_lower = (title + short_description).lower()
+    if "critical" in severity_lower:
+        severity = "Critical"
+    elif "high" in severity_lower or "degradation" in severity_lower:
+        severity = "High"
+    elif "medium" in severity_lower:
+        severity = "Medium"
+    else:
+        severity = "High"  # Default to High for abnormalities
+
+    # Process as incident through the standard workflow
+    try:
+        # Create incident ticket and send to Slack
+        full_ticket = await raise_incident_in_slack(
+            alert_text=alert_text,
+            severity=severity,
+            affected_system=application_name
+        )
+
+        # Add monitoring context to ticket
+        full_ticket["monitoring_source"] = {
+            "status": data.get("status"),
+            "detection_time": detection_time,
+            "related_log_lines": related_log_lines,
+            "timestamp_detected": data.get("timestamp_detected")
+        }
+
+        logger.info(f"Successfully processed incident for {application_name}")
+
+        # Return the result as output (no handoff to resolution agent)
+        return {
+            "status": "success",
+            "incident_id": full_ticket.get("id"),
+            "title": full_ticket.get("title"),
+            "application_name": application_name,
+            "severity": severity,
+            "description": short_description,
+            "detection_time": detection_time,
+            "slack_delivery": {
+                "status": full_ticket.get("slack_delivery_status"),
+                "channel": full_ticket.get("slack_channel"),
+                "message_timestamp": full_ticket.get("slack_ts"),
+                "error": full_ticket.get("slack_error")
+            },
+            "metrics": full_ticket.get("metrics", {}),
+            "correlation": full_ticket.get("correlation", {}),
+            "monitoring_source": full_ticket.get("monitoring_source", {}),
+            "full_ticket": full_ticket
+        }
+
+    except Exception as e:
+        logger.error(f"Error processing monitoring incident: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "error": "Failed to process incident",
+            "detail": str(e),
+            "application_name": application_name,
+            "title": title
+        }
