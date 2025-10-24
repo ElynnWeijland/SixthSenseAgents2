@@ -7,6 +7,8 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from utils import project_client, tc
+from azure.storage.blob import BlobServiceClient
+from azure.identity import DefaultAzureCredential
 
 # Import Monitoring Agent functions
 try:
@@ -58,6 +60,34 @@ except ImportError:
     print("Warning: report_agent.py not found. Report agent will not be available.")
 
 
+async def get_logs_from_azure_with_auth(
+    storage_account_name: str,
+    container_name: str,
+    blob_name: str
+) -> str:
+    """
+    Retrieve logs from Azure Storage using the current Azure session credentials.
+
+    This uses DefaultAzureCredential which picks up your existing Azure CLI/SDK authentication.
+    """
+    try:
+        account_url = f"https://{storage_account_name}.blob.core.windows.net"
+        credential = DefaultAzureCredential()
+
+        blob_service_client = BlobServiceClient(account_url=account_url, credential=credential)
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+
+        download_stream = blob_client.download_blob()
+        content = download_stream.readall().decode("utf-8")
+
+        print(f"{tc.CYAN}Successfully retrieved logs from Azure Storage ({blob_name}){tc.RESET}\n")
+        return content
+    except Exception as e:
+        print(f"{tc.YELLOW}Note: Could not retrieve logs from Azure Storage: {e}{tc.RESET}")
+        print(f"{tc.YELLOW}Make sure you're authenticated with: az login{tc.RESET}\n")
+        raise
+
+
 async def main() -> None:
     """Integrated multi-agent workflow: Monitoring → Incident Detection → Resolution.
 
@@ -88,26 +118,32 @@ async def main() -> None:
 
             try:
                 # Get monitoring parameters from environment variables
-                storage_account_url = os.getenv("STORAGE_ACCOUNT_URL", "")
+                storage_account_name = os.getenv("STORAGE_ACCOUNT_NAME", "")
                 container_name = os.getenv("CONTAINER_NAME", "logs")
                 blob_name = os.getenv("BLOB_NAME", "AvailabilityLogs.log")
-                sas_token = os.getenv("SAS_TOKEN", "")
 
                 # Create monitoring agent
                 monitor_agent, monitor_thread = await create_monitor_agent()
 
                 try:
-                    if storage_account_url and sas_token:
-                        # Retrieve logs from Azure Storage
-                        print(f"{tc.CYAN}Retrieving logs from Azure Storage...{tc.RESET}\n")
-                        log_content = await get_log_from_azure_storage(
-                            storage_account_url=storage_account_url,
-                            container_name=container_name,
-                            blob_name=blob_name,
-                            sas_token=sas_token
-                        )
+                    log_content = None
 
-                        # Analyze logs for abnormalities
+                    if storage_account_name:
+                        # Attempt to retrieve logs from Azure Storage using existing session
+                        try:
+                            print(f"{tc.CYAN}Retrieving logs from Azure Storage ({storage_account_name})...{tc.RESET}\n")
+                            log_content = await get_logs_from_azure_with_auth(
+                                storage_account_name=storage_account_name,
+                                container_name=container_name,
+                                blob_name=blob_name
+                            )
+                        except Exception as e:
+                            print(f"{tc.YELLOW}Could not retrieve logs: {e}{tc.RESET}")
+                            print(f"{tc.YELLOW}Using sample data instead.{tc.RESET}\n")
+                            log_content = None
+
+                    if log_content:
+                        # Analyze real logs for abnormalities
                         print(f"{tc.CYAN}Analyzing logs for abnormalities...{tc.RESET}\n")
                         analysis_result = await check_for_abnormalities(
                             log_content=log_content,
@@ -119,7 +155,8 @@ async def main() -> None:
                         monitoring_output = collect_abnormalities_output(analysis_result)
 
                     else:
-                        print(f"{tc.YELLOW}Azure Storage credentials not configured. Using sample data.{tc.RESET}\n")
+                        print(f"{tc.YELLOW}Using sample data for demonstration.{tc.RESET}")
+                        print(f"{tc.YELLOW}To use real data, set STORAGE_ACCOUNT_NAME environment variable.{tc.RESET}\n")
                         # Use sample monitoring output for demonstration
                         monitoring_output = {
                             "status": "abnormalities_detected",
