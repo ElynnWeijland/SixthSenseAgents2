@@ -477,14 +477,41 @@ async def fetch_azure_metrics(
         lookback_minutes = max(1, lookback_seconds // 60)  # Convert seconds to minutes, min 1
 
         logger.info(f"Fetching Azure Monitor metrics for VM: {vm_name}")
-        logger.info(f"Using current time for Azure Monitor query (lookback: {lookback_minutes} minutes)")
+
+        # Extract detection time from related_log_lines if available
+        detection_time = None
+        related_log_lines = parsed.get("related_log_lines", [])
+
+        if related_log_lines and isinstance(related_log_lines, list):
+            try:
+                # Log lines start with timestamp, e.g., "2025-10-21T18:46:00+02:00 app=..."
+                # Extract all timestamps and use the latest one
+                timestamps = []
+                for line in related_log_lines:
+                    if isinstance(line, str) and line.strip():
+                        # First token before space is the timestamp
+                        parts = line.split()
+                        if parts:
+                            ts = parts[0]
+                            timestamps.append(ts)
+
+                if timestamps:
+                    # Use the latest timestamp
+                    detection_time = timestamps[-1]
+                    logger.info(f"Extracted detection_time from log lines: {detection_time}")
+            except Exception as e:
+                logger.debug(f"Could not extract timestamp from log lines: {e}")
+
+        if not detection_time:
+            logger.warning("No detection_time from log lines, using parsed timestamp")
+            detection_time = parsed.get("timestamp")
+
+        logger.info(f"Fetching metrics for timespan around: {detection_time}")
 
         # Call the real Azure Monitor metrics fetcher
-        # NOTE: Use current time (None) instead of historical detection_time from logs
-        # This ensures we get recent metrics available in Azure Monitor, not outdated data
         metrics = await fetch_azure_monitor_metrics(
             vm_name=vm_name,
-            detection_time=None,  # Use current time instead of historical timestamp
+            detection_time=detection_time,
             lookback_minutes=lookback_minutes
         )
 

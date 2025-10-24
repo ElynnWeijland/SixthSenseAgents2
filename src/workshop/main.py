@@ -458,9 +458,10 @@ async def main() -> None:
                     2. Indirect benefits (preserved revenue, customer satisfaction)
                     3. Total financial impact with explanation
 
-                    IMPORTANT: Include the Ticket ID "{ticket_id}" in your Slack message so it's clear this benefits analysis is related to the ticket that was just sent.
-
-                    After completing your analysis, send the results to the Slack incident channel.
+                    IMPORTANT INSTRUCTIONS:
+                    - Reference the Application as "{application_name}" (NOT "VM Name")
+                    - Include the Ticket ID "{ticket_id}" in your Slack message so it's clear this benefits analysis is related to the ticket that was just sent.
+                    - After completing your analysis, send the results to the Slack incident channel.
                     """
 
                     benefits_result = await post_to_benefits_agent(
