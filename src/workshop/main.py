@@ -127,18 +127,20 @@ def transform_monitoring_to_incident_format(monitoring_output: dict) -> dict:
 
 
 async def main() -> None:
-    """Integrated multi-agent workflow: Monitoring → Incident Detection → Resolution.
+    """Integrated multi-agent workflow: Monitoring → Incident Detection → Resolution → Report → Benefits.
 
     This workflow:
     1. Monitoring Agent: Analyzes logs for abnormalities
     2. Incident Detection Agent: Processes abnormalities and creates incident tickets (only if abnormalities detected)
     3. Resolution Agent: Diagnoses and resolves the incident (only if incident created)
+    4. Report Agent: Creates a ticket with resolution details and sends to Slack
+    5. Benefits Agent: Calculates financial impact and sends analysis to Slack (with ticket ID)
     """
 
     # Use the project client within a context manager for the entire session
     with project_client:
         print("\n" + "="*80)
-        print("INTEGRATED WORKFLOW: Monitoring → Incident Detection → Resolution")
+        print("INTEGRATED WORKFLOW: Monitoring → Detection → Resolution → Report → Benefits")
         print("="*80 + "\n")
 
         monitoring_output = None
@@ -315,6 +317,143 @@ async def main() -> None:
             print(f"{tc.YELLOW}Resolution agent not available. Skipping resolution step.{tc.RESET}\n")
 
         # ============================================================================
+        # STEP 4: REPORT AGENT - Create ticket and send to Slack
+        # ============================================================================
+        if (HAS_REPORT_AGENT and incident_result
+            and incident_result.get("status") == "success"):
+
+            print(f"{tc.GREEN}{'='*80}{tc.RESET}")
+            print(f"{tc.GREEN}STEP 4: REPORT AGENT - Creating Ticket with Resolution & Sending to Slack{tc.RESET}")
+            print(f"{tc.GREEN}{'='*80}{tc.RESET}\n")
+
+            try:
+                # Extract incident details for the report
+                incident_description = incident_result.get("description", "")
+                application_name = incident_result.get("application_name", "Unknown")
+                severity = incident_result.get("severity", "High")
+
+                report_agent, report_thread = await create_report_agent()
+
+                try:
+                    # Construct the ticket creation request
+                    ticket_query = f"""
+                    Create a ticket for the following incident:
+
+                    Incident: {incident_description}
+                    Application: {application_name}
+                    Severity: {severity}
+                    Resolution: {resolution_result}
+
+                    Please:
+                    1. Generate a unique ticket ID (format: INC-YYYYMMDD-NNN)
+                    2. Create a clear ticket title
+                    3. Include the full resolution details
+                    4. Extract and organize all relevant incident details
+                    5. Format the ticket for Slack delivery
+                    6. Send the ticket to Slack immediately
+                    """
+
+                    ticket_result = await post_to_report_agent(
+                        thread_id=report_thread.id,
+                        content=ticket_query,
+                        agent=report_agent,
+                        thread=report_thread
+                    )
+
+                    print(f"\n{tc.CYAN}Report Agent Output:{tc.RESET}")
+                    print(f"{ticket_result}\n")
+
+                    # Extract ticket ID from the result (look for INC-YYYYMMDD-NNN pattern)
+                    import re
+                    ticket_id_match = re.search(r'(INC-\d{8}-\d{3})', ticket_result)
+                    if ticket_id_match:
+                        ticket_id = ticket_id_match.group(1)
+                        print(f"{tc.GREEN}Extracted Ticket ID: {ticket_id}{tc.RESET}\n")
+                    else:
+                        ticket_id = "INC-UNKNOWN-001"
+                        print(f"{tc.YELLOW}Could not extract ticket ID, using default{tc.RESET}\n")
+
+                finally:
+                    # Cleanup report agent
+                    try:
+                        project_client.agents.delete_agent(report_agent.id)
+                        print(f"Deleted report agent: {report_agent.id}\n")
+                    except Exception as e:
+                        print(f"Error deleting report agent: {e}\n")
+
+            except Exception as e:
+                print(f"{tc.RED}Error in Report Agent: {e}{tc.RESET}\n")
+                ticket_id = "INC-ERROR-001"
+        elif HAS_REPORT_AGENT and incident_result and incident_result.get("status") != "success":
+            print(f"{tc.YELLOW}Incident was not successfully created. Skipping report agent.{tc.RESET}\n")
+        elif not HAS_REPORT_AGENT:
+            print(f"{tc.YELLOW}Report agent not available. Skipping ticket creation.{tc.RESET}\n")
+
+        # ============================================================================
+        # STEP 5: BENEFITS AGENT - Calculate financial impact and send to Slack
+        # ============================================================================
+        if (HAS_BENEFITS_AGENT and incident_result
+            and incident_result.get("status") == "success" and ticket_id):
+
+            print(f"{tc.GREEN}{'='*80}{tc.RESET}")
+            print(f"{tc.GREEN}STEP 5: BENEFITS AGENT - Calculating Financial Impact & Sending to Slack{tc.RESET}")
+            print(f"{tc.GREEN}{'='*80}{tc.RESET}\n")
+
+            try:
+                # Extract incident details for benefits analysis
+                incident_description = incident_result.get("description", "")
+                application_name = incident_result.get("application_name", "Unknown")
+
+                benefits_agent, benefits_thread = await create_benefits_agent()
+
+                try:
+                    # Construct the benefits analysis request
+                    benefits_query = f"""
+                    Please calculate the financial benefits of the following prevented issue:
+
+                    Ticket ID: {ticket_id}
+                    Application: {application_name}
+                    Original Problem: {incident_description}
+                    Resolution: {resolution_result}
+
+                    Please provide:
+                    1. Direct cost savings (developer time, infrastructure)
+                    2. Indirect benefits (preserved revenue, customer satisfaction)
+                    3. Total financial impact with explanation
+
+                    IMPORTANT: Include the Ticket ID "{ticket_id}" in your Slack message so it's clear this benefits analysis is related to the ticket that was just sent.
+
+                    After completing your analysis, send the results to the Slack incident channel.
+                    """
+
+                    benefits_result = await post_to_benefits_agent(
+                        thread_id=benefits_thread.id,
+                        content=benefits_query,
+                        agent=benefits_agent,
+                        thread=benefits_thread
+                    )
+
+                    print(f"\n{tc.CYAN}Benefits Agent Analysis:{tc.RESET}")
+                    print(f"{benefits_result}\n")
+
+                finally:
+                    # Cleanup benefits agent
+                    try:
+                        project_client.agents.delete_agent(benefits_agent.id)
+                        print(f"Deleted benefits agent: {benefits_agent.id}\n")
+                    except Exception as e:
+                        print(f"Error deleting benefits agent: {e}\n")
+
+            except Exception as e:
+                print(f"{tc.RED}Error in Benefits Agent: {e}{tc.RESET}\n")
+        elif HAS_BENEFITS_AGENT and (not incident_result or incident_result.get("status") != "success"):
+            print(f"{tc.YELLOW}Incident was not successfully created. Skipping benefits analysis.{tc.RESET}\n")
+        elif HAS_BENEFITS_AGENT and not ticket_id:
+            print(f"{tc.YELLOW}Ticket ID not available. Skipping benefits analysis.{tc.RESET}\n")
+        elif not HAS_BENEFITS_AGENT:
+            print(f"{tc.YELLOW}Benefits agent not available. Skipping benefits analysis.{tc.RESET}\n")
+
+        # ============================================================================
         # SUMMARY
         # ============================================================================
         print(f"{tc.GREEN}{'='*80}{tc.RESET}")
@@ -322,11 +461,14 @@ async def main() -> None:
         print(f"{tc.GREEN}{'='*80}{tc.RESET}\n")
 
         print(f"{tc.CYAN}Workflow Summary:{tc.RESET}")
-        print(f"  Monitoring Result: {monitoring_output.get('status') if monitoring_output else 'Skipped'}")
-        print(f"  Incident Result: {incident_result.get('status') if incident_result else 'Not created'}")
-        print(f"  Resolution Result: {resolution_result if resolution_result else 'Not attempted'}")
+        print(f"  Step 1 - Monitoring: {monitoring_output.get('status') if monitoring_output else 'Skipped'}")
+        print(f"  Step 2 - Incident Detection: {incident_result.get('status') if incident_result else 'Not created'}")
+        print(f"  Step 3 - Resolution: {resolution_result if resolution_result else 'Not attempted'}")
         if ticket_id:
-            print(f"  Ticket ID: {ticket_id}")
+            print(f"  Step 4 - Report: Ticket ID {ticket_id} created")
+        else:
+            print(f"  Step 4 - Report: Not executed")
+        print(f"  Step 5 - Benefits: Analysis sent to Slack (if ticket created)")
         print()
 
 
