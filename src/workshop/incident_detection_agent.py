@@ -43,6 +43,14 @@ CET_ZONE = ZoneInfo("Europe/Paris")
 
 RAISED_BY = "AIDA - Advanced Incident Detection Agent"
 
+# Mapping between application names and Azure VM names
+# Used to determine which VM to query for metrics and reboot if needed
+APP_TO_VM_MAPPING = {
+    "AppZwaagdijk": "VirtualMachine",
+    # Add more mappings as needed
+    # "AppName": "vm-name",
+}
+
 
 def generate_ticket_id() -> str:
     """
@@ -111,24 +119,32 @@ def format_metrics_summary(metrics: Dict[str, Any]) -> str:
 
 def extract_vm_name(application_name: str, metrics: Dict[str, Any] = None) -> str:
     """
-    Extract or derive VM name from application name and metrics.
+    Extract or derive VM name from application name and metrics using the APP_TO_VM_MAPPING.
 
     Parameters:
     - application_name: Application name from monitoring data
     - metrics: Metrics dictionary (may contain vm_name)
 
     Returns:
-    - Best guess at VM name for the Resolution Agent
+    - Azure VM name for the Resolution Agent to use
     """
     # If metrics contain vm_name, use it
     if metrics and metrics.get("vm_name"):
         return metrics.get("vm_name")
 
-    # Use application name as VM name (assuming they follow similar naming)
+    # Check if application name is in the mapping
+    if application_name and application_name in APP_TO_VM_MAPPING:
+        vm_name = APP_TO_VM_MAPPING[application_name]
+        logger.info(f"Mapped application '{application_name}' to VM '{vm_name}'")
+        return vm_name
+
+    # If application name provided but not in mapping, log warning and use it as fallback
     if application_name and application_name != "Unknown":
+        logger.warning(f"Application '{application_name}' not found in APP_TO_VM_MAPPING, using as VM name")
         return application_name
 
     # Fallback
+    logger.warning("No application name available, defaulting to 'VirtualMachine'")
     return "VirtualMachine"
 
 
@@ -742,10 +758,20 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
     """
     ticket = create_incident_ticket(alert_text)
 
-    # 2) fetch data from azure monitor (pass affected_system as vm_name)
+    # 2) fetch data from azure monitor (use mapping to get correct VM name)
     try:
-        # Use affected_system as vm_name if available, otherwise extract from triage
-        vm_name = affected_system or ticket.get("triage", {}).get("service", "VirtualMachine")
+        # Get application name from affected_system or triage
+        app_name = affected_system or ticket.get("triage", {}).get("service", "")
+
+        # Map application name to VM name
+        if app_name and app_name in APP_TO_VM_MAPPING:
+            vm_name = APP_TO_VM_MAPPING[app_name]
+            logger.info(f"Using mapped VM name '{vm_name}' for application '{app_name}'")
+        else:
+            vm_name = app_name or "VirtualMachine"
+            if app_name:
+                logger.warning(f"Application '{app_name}' not in mapping, using as VM name")
+
         metrics = await fetch_azure_metrics(ticket.get("triage", {}), vm_name=vm_name)
         ticket["metrics"] = metrics
     except Exception as e:
