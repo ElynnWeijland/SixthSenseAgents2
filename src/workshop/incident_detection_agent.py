@@ -474,16 +474,17 @@ async def fetch_azure_metrics(
     - Dictionary with metrics data (cpu_max, memory_max, network_in_max, etc.)
     """
     try:
-        # Extract timestamp from parsed alert if available
-        detection_time = parsed.get("timestamp")
         lookback_minutes = max(1, lookback_seconds // 60)  # Convert seconds to minutes, min 1
 
         logger.info(f"Fetching Azure Monitor metrics for VM: {vm_name}")
+        logger.info(f"Using current time for Azure Monitor query (lookback: {lookback_minutes} minutes)")
 
         # Call the real Azure Monitor metrics fetcher
+        # NOTE: Use current time (None) instead of historical detection_time from logs
+        # This ensures we get recent metrics available in Azure Monitor, not outdated data
         metrics = await fetch_azure_monitor_metrics(
             vm_name=vm_name,
-            detection_time=detection_time,
+            detection_time=None,  # Use current time instead of historical timestamp
             lookback_minutes=lookback_minutes
         )
 
@@ -772,10 +773,12 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
             if app_name:
                 logger.warning(f"Application '{app_name}' not in mapping, using as VM name")
 
+        logger.info(f"Fetching metrics for VM: {vm_name}")
         metrics = await fetch_azure_metrics(ticket.get("triage", {}), vm_name=vm_name)
+        logger.info(f"Metrics fetch result - status: {metrics.get('status')}, cpu_max: {metrics.get('cpu_max')}")
         ticket["metrics"] = metrics
     except Exception as e:
-        logger.debug("Metrics fetch failed: %s", e)
+        logger.error(f"Metrics fetch failed with exception: {e}", exc_info=True)
         ticket["metrics"] = {}
 
     # 3) correlate data (placeholder ML)
