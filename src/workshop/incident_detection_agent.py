@@ -742,9 +742,11 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
     """
     ticket = create_incident_ticket(alert_text)
 
-    # 2) fetch data from azure monitor
+    # 2) fetch data from azure monitor (pass affected_system as vm_name)
     try:
-        metrics = await fetch_azure_metrics(ticket.get("triage", {}))
+        # Use affected_system as vm_name if available, otherwise extract from triage
+        vm_name = affected_system or ticket.get("triage", {}).get("service", "VirtualMachine")
+        metrics = await fetch_azure_metrics(ticket.get("triage", {}), vm_name=vm_name)
         ticket["metrics"] = metrics
     except Exception as e:
         logger.debug("Metrics fetch failed: %s", e)
