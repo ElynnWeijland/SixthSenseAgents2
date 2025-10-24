@@ -284,9 +284,13 @@ async def fetch_azure_monitor_metrics(
             "Disk Write Bytes": "disk_write_max",
         }
 
-        # Format timespan in ISO 8601 format
-        start_str = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-        end_str = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        # Format timespan in ISO 8601 format (Azure API requires UTC with Z suffix)
+        # Convert to UTC before formatting to handle timezones correctly
+        start_time_utc = start_time.astimezone(timezone.utc) if start_time.tzinfo else start_time
+        end_time_utc = end_time.astimezone(timezone.utc) if end_time.tzinfo else end_time
+
+        start_str = start_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+        end_str = end_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
         timespan_str = f"{start_str}/{end_str}"
 
         logger.debug(f"Timespan: {timespan_str}")
