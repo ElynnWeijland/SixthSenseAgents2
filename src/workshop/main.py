@@ -242,11 +242,11 @@ async def main() -> None:
                 print(f"{tc.CYAN}Incident Detection Output:{tc.RESET}")
                 print(f"  Status: {incident_result.get('status')}")
                 if incident_result.get('status') == 'success':
-                    print(f"  Incident ID: {incident_result.get('incident_id')}")
+                    print(f"  Ticket ID: {incident_result.get('ticket_id')}")
                     print(f"  Title: {incident_result.get('title')}")
                     print(f"  Severity: {incident_result.get('severity')}")
                     print(f"  Application: {incident_result.get('application_name')}")
-                    ticket_id = incident_result.get('incident_id')
+                    ticket_id = incident_result.get('ticket_id')
 
                     # Show Slack delivery status
                     if incident_result.get('slack_delivery'):
@@ -279,7 +279,7 @@ async def main() -> None:
             try:
                 # Construct incident description for resolution agent
                 incident_description = f"""
-                Incident ID: {incident_result.get('incident_id')}
+                Ticket ID: {ticket_id}
                 Title: {incident_result.get('title')}
                 Application: {incident_result.get('application_name')}
                 Severity: {incident_result.get('severity')}
@@ -335,21 +335,23 @@ async def main() -> None:
                 report_agent, report_thread = await create_report_agent()
 
                 try:
-                    # Construct the ticket creation request
+                    # Construct the ticket creation request with the unified ticket ID
                     ticket_query = f"""
-                    Create a ticket for the following incident:
+                    Create a ticket for the following incident with Ticket ID: {ticket_id}
 
                     Incident: {incident_description}
                     Application: {application_name}
                     Severity: {severity}
                     Resolution: {resolution_result}
 
+                    IMPORTANT: Use the provided Ticket ID: {ticket_id}
+
                     Please:
-                    1. Generate a unique ticket ID (format: INC-YYYYMMDD-NNN)
+                    1. Use the provided ticket ID: {ticket_id}
                     2. Create a clear ticket title
                     3. Include the full resolution details
                     4. Extract and organize all relevant incident details
-                    5. Format the ticket for Slack delivery
+                    5. Format the ticket for Slack delivery with Ticket ID: {ticket_id}
                     6. Send the ticket to Slack immediately
                     """
 
@@ -363,15 +365,7 @@ async def main() -> None:
                     print(f"\n{tc.CYAN}Report Agent Output:{tc.RESET}")
                     print(f"{ticket_result}\n")
 
-                    # Extract ticket ID from the result (look for INC-YYYYMMDD-NNN pattern)
-                    import re
-                    ticket_id_match = re.search(r'(INC-\d{8}-\d{3})', ticket_result)
-                    if ticket_id_match:
-                        ticket_id = ticket_id_match.group(1)
-                        print(f"{tc.GREEN}Extracted Ticket ID: {ticket_id}{tc.RESET}\n")
-                    else:
-                        ticket_id = "INC-UNKNOWN-001"
-                        print(f"{tc.YELLOW}Could not extract ticket ID, using default{tc.RESET}\n")
+                    print(f"{tc.GREEN}Report Agent processed with Ticket ID: {ticket_id}{tc.RESET}\n")
 
                 finally:
                     # Cleanup report agent

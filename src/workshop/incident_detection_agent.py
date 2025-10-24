@@ -4,6 +4,7 @@ import uuid
 import json
 import asyncio
 import logging
+import random
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, Tuple
 from zoneinfo import ZoneInfo
@@ -41,6 +42,21 @@ SLACK_CHANNEL_ENV = "SLACK_CHANNEL"
 CET_ZONE = ZoneInfo("Europe/Paris")
 
 RAISED_BY = "AIDA - Advanced Incident Detection Agent"
+
+
+def generate_ticket_id() -> str:
+    """
+    Generate a unique ticket ID in the format INC + 7 random digits.
+
+    Example: INC1234567
+
+    Returns:
+        str: A unique ticket ID
+    """
+    random_digits = ''.join([str(random.randint(0, 9)) for _ in range(7)])
+    ticket_id = f"INC{random_digits}"
+    logger.debug(f"Generated ticket ID: {ticket_id}")
+    return ticket_id
 
 
 def _validate_env() -> tuple[str, str]:
@@ -730,6 +746,10 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
     else:
         data = monitoring_json
 
+    # Generate unique ticket ID for this incident
+    ticket_id = generate_ticket_id()
+    logger.info(f"Generated ticket ID for incident: {ticket_id}")
+
     # Validate required fields
     required_fields = [
         "status",
@@ -817,6 +837,7 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
         # Return the result as output (no handoff to resolution agent)
         return {
             "status": "success",
+            "ticket_id": ticket_id,
             "incident_id": full_ticket.get("id"),
             "title": full_ticket.get("title"),
             "application_name": application_name,
