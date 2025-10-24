@@ -1,23 +1,38 @@
-![alt text](../../media/image-usecase.png)
+# SixthSense Agents — Overview of Agents
 
-# Contoso Sales Analysis Agent
+This folder contains cooperating agents designed to detect, triage, resolve, report, and quantify the impact of infrastructure incidents.
 
-Imagine you are a sales manager at Contoso, a multinational retail company that sells outdoor equipment. You need to analyze sales data to find trends, understand customer preferences, and make informed business decisions. To help you, Contoso has developed a conversational agent that can answer questions about your sales data.
+Agents
+- Monitoring Agent (monitoring availability)
+  - Purpose: Continuously ingest monitoring availability alerts and forward meaningful alerts to the incident detection pipeline.
+  - Input: Monitoring availability alerts (service, region, timestamp, metric values).
+  - Output: Normalized alert payloads that downstream agents consume.
 
-## What is an LLM-Powered AI Agent
+- Incident Detection Agent (triage & Slack incident creation)
+  - Purpose: Receive availability alerts, triage (service, region, severity, timestamp), optionally enrich using Azure APIs, and create an incident in a configured Slack channel.
+  - Behavior:
+    - Produces a ticket dict (id, title, summary, created_at, status, triage data).
+    - Optionally queries Azure to enrich context (best-effort; does not require Azure SDKs).
+    - Posts a Block Kit styled message to Slack (with fallback to plain text for test/dummy clients).
+  - Implementation: `src/workshop/incident_detection_agent.py`
+  - Trigger script: `src/workshop/main.py`
+  - Test shim: `/workspaces/SixthSenseAgents2/incident_detection_agent.py`
 
-An AI Agent is semi-autonomous software designed to achieve a given goal without requiring predefined steps or processes. Instead of following explicitly programmed instructions, the agent determines how to accomplish the task dynamically.
+- Resolution Agent
+  - Purpose: Search logs, runbooks, KBs, and propose remediation steps or escalate.
+  - Integration: can call Slack helper or create follow-ups to the ticket.
 
-For example, if a user asks, "**Show the total sales by region as a pie chart**", the app does not rely on predefined logic for this specific request. Instead, a Large Language Model (LLM) interprets the request, manages the conversation flow and context, and orchestrates the necessary actions to produce the desired pie chart based on the regional sales data.
+- Reporting Agent
+  - Purpose: Post status updates, timeline, resolution notes to Slack and ticketing backends.
 
-Unlike traditional applications, where developers define the logic and workflows to support business processes, AI Agents shift this responsibility to the LLM. In these systems, prompt engineering, clear instructions, and tool development are critical to ensuring the application performs as intended.
+- Benefits Agent
+  - Purpose: Calculate estimated benefits from prevented downtime and add to incident reports.
 
-## What is the Azure AI Agent Service
-
-The Azure AI Agent Service is a single-agent cloud service with accompanying SDKs. Developers can access SDKs for [Python](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-python-azure) and [C#](https://learn.microsoft.com/azure/ai-services/agents/quickstart?pivots=programming-language-csharp).
-
-The Azure AI Agent Service simplifies the creation of intelligent agents by offering built-in conversation state management and compatibility with various AI models. It provides a range of ready-to-use tools, including integrations with Fabric, SharePoint, Azure AI Search, and Azure Storage. The service also supports custom integrations through the Function Calling tool and enables RAG-style search capabilities with a built-in vector store for “file search” and semantic search features. Designed for scalability, it ensures smooth performance even under varying user loads.
-
-Learn more about the Azure AI Agent Service in the [Azure AI Agent Service documentation](https://learn.microsoft.com/azure/ai-services/agents/concepts/agents){:target="_blank"}. In particular, read about the [components of agents](https://learn.microsoft.com/azure/ai-services/agents/concepts/agents#agents-components){:target="_blank"}.
+Development notes
+- Slack credentials are provided via exported environment variables:
+  - export SLACK_BOT_TOKEN="xoxb-..."
+  - export SLACK_CHANNEL="#incidents"
+- The code uses python-dotenv to load a local .env if present, but exporting is recommended.
+- `main.py` guards import of `utils` so Slack-only runs don't require Azure SDKs.
 
 
