@@ -320,8 +320,9 @@ async def fetch_azure_monitor_metrics(
                 "metricnames": ",".join(metrics_to_query.keys()),  # Join all metric names
             }
 
-            logger.debug(f"API URL: {api_url}")
-            logger.debug(f"API params: {params}")
+            logger.info(f"API URL: {api_url}")
+            logger.info(f"API params: {params}")
+            logger.info(f"Requesting metrics: {list(metrics_to_query.keys())}")
 
             # Make REST API call
             async with httpx.AsyncClient() as client:
@@ -334,10 +335,12 @@ async def fetch_azure_monitor_metrics(
 
                     if "value" in data and data["value"]:
                         logger.info(f"Got {len(data['value'])} metrics from Azure Monitor")
+                        logger.debug(f"Raw API response: {data}")
 
                         for metric in data["value"]:
                             metric_name = metric.get("name", {}).get("value", "Unknown")
-                            logger.debug(f"Processing metric: {metric_name}")
+                            metric_unit = metric.get("unit", "Unknown")
+                            logger.info(f"Processing metric: {metric_name} (Unit: {metric_unit})")
 
                             # Get timeseries data
                             timeseries = metric.get("timeseries", [])
@@ -345,6 +348,9 @@ async def fetch_azure_monitor_metrics(
                                 for ts in timeseries:
                                     data_points = ts.get("data", [])
                                     if data_points:
+                                        logger.debug(f"  Timeseries for {metric_name}: {len(data_points)} data points")
+                                        logger.debug(f"  Data points: {data_points}")
+
                                         # Find maximum value
                                         max_val = None
                                         for dp in data_points:
@@ -357,16 +363,18 @@ async def fetch_azure_monitor_metrics(
                                             for query_name, storage_key in metrics_to_query.items():
                                                 if query_name.lower() in metric_name.lower():
                                                     metrics[storage_key] = max_val
-                                                    logger.debug(f"Stored {metric_name}: {max_val} in {storage_key}")
+                                                    logger.info(f"Stored {metric_name}: {max_val} {metric_unit} in {storage_key}")
                                                     break
 
                                         metric_info = {
                                             "name": metric_name,
-                                            "unit": metric.get("unit", "Unknown"),
+                                            "unit": metric_unit,
                                             "max": max_val,
                                             "data_points": len(data_points)
                                         }
                                         metrics["raw_data"].append(metric_info)
+                            else:
+                                logger.warning(f"No timeseries data for metric: {metric_name}")
 
                         metrics["status"] = "success"
                         logger.info(f"Successfully fetched metrics for VM '{vm_name}'")
