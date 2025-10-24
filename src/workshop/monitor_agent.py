@@ -192,12 +192,29 @@ def collect_abnormalities_output(analysis_result: dict) -> dict:
             'abnormal_lines': []
         }
 
+    # Extract detection time from the first abnormal line
+    abnormal_lines = analysis_result.get('abnormal_lines', [])
+    detection_time = None
+    if abnormal_lines and isinstance(abnormal_lines, list):
+        for line in abnormal_lines:
+            if isinstance(line, str) and line.strip():
+                # Extract timestamp from beginning of line (ISO 8601 format)
+                parts = line.split()
+                if parts:
+                    detection_time = parts[0]
+                    break
+
+    # Fallback to current time only if no timestamp found in abnormal lines
+    if not detection_time:
+        logger.warning("No detection time found in abnormal lines, using current time")
+        detection_time = datetime.now().isoformat()
+
     return {
         'status': 'abnormalities_detected',
         'application_name': analysis_result.get('application_name', 'Unknown'),
-        'abnormal_lines': analysis_result.get('abnormal_lines', []),
+        'abnormal_lines': abnormal_lines,
         'analysis_summary': analysis_result.get('analysis', ''),
-        'timestamp': datetime.now().isoformat()
+        'timestamp': detection_time
     }
 
 
