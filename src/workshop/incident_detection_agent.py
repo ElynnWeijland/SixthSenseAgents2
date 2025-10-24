@@ -236,14 +236,18 @@ async def fetch_azure_monitor_metrics(
         return metrics
 
     try:
-        # Parse detection time or use current time
-        if detection_time:
-            try:
-                detection_dt = datetime.fromisoformat(detection_time.replace('Z', '+00:00'))
-            except Exception:
-                detection_dt = datetime.now(timezone.utc)
-        else:
-            detection_dt = datetime.now(timezone.utc)
+        # Parse detection time - no fallback to current time
+        if not detection_time:
+            logger.error("No detection_time provided for metrics query")
+            metrics["status"] = "detection_time_missing"
+            return metrics
+
+        try:
+            detection_dt = datetime.fromisoformat(detection_time.replace('Z', '+00:00'))
+        except Exception as e:
+            logger.error(f"Failed to parse detection_time '{detection_time}': {e}")
+            metrics["status"] = "detection_time_parse_error"
+            return metrics
 
         # Calculate time range
         start_time = detection_dt - timedelta(minutes=lookback_minutes)
