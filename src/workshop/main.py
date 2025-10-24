@@ -246,6 +246,18 @@ async def main() -> None:
                     print(f"  Title: {incident_result.get('title')}")
                     print(f"  Severity: {incident_result.get('severity')}")
                     print(f"  Application: {incident_result.get('application_name')}")
+                    print(f"  VM Name: {incident_result.get('vm_name')}")
+
+                    # Show metrics information
+                    metrics = incident_result.get('metrics', {})
+                    if metrics and metrics.get('status') == 'success':
+                        print(f"  Azure Metrics:")
+                        if metrics.get('cpu_max') is not None:
+                            print(f"    - CPU: {metrics.get('cpu_max')}%")
+                        if metrics.get('memory_max') is not None:
+                            mem_gb = metrics.get('memory_max') / (1024**3)
+                            print(f"    - Memory: {mem_gb:.2f}GB")
+
                     ticket_id = incident_result.get('ticket_id')
 
                     # Show Slack delivery status
@@ -277,15 +289,37 @@ async def main() -> None:
             print(f"{tc.GREEN}{'='*80}{tc.RESET}\n")
 
             try:
-                # Construct incident description for resolution agent
+                # Extract VM name and metrics for Resolution Agent
+                vm_name = incident_result.get('vm_name', 'VirtualMachine')
+                metrics = incident_result.get('metrics', {})
+
+                # Construct incident description with all details for resolution agent
                 incident_description = f"""
                 Ticket ID: {ticket_id}
                 Title: {incident_result.get('title')}
                 Application: {incident_result.get('application_name')}
+                VM Name: {vm_name}
                 Severity: {incident_result.get('severity')}
                 Description: {incident_result.get('description')}
                 Detection Time: {incident_result.get('detection_time')}
+
+                Azure Monitor Metrics:
                 """
+
+                # Add metrics details to help Resolution Agent make decisions
+                if metrics and metrics.get('status') == 'success':
+                    if metrics.get('cpu_max') is not None:
+                        cpu_value = metrics.get('cpu_max')
+                        incident_description += f"\n- CPU Usage: {cpu_value}%"
+                        if cpu_value > 80:
+                            incident_description += " (HIGH - requires immediate action)"
+                    if metrics.get('memory_max') is not None:
+                        mem_gb = metrics.get('memory_max') / (1024**3)
+                        incident_description += f"\n- Memory: {mem_gb:.2f}GB"
+                        if mem_gb > 8:
+                            incident_description += " (HIGH)"
+                else:
+                    incident_description += "\nNo metrics available"
 
                 resolution_agent, resolution_thread = await create_resolution_agent()
 

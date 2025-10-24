@@ -59,6 +59,79 @@ def generate_ticket_id() -> str:
     return ticket_id
 
 
+def format_metrics_summary(metrics: Dict[str, Any]) -> str:
+    """
+    Format Azure Monitor metrics into a human-readable summary for the Resolution Agent.
+
+    Parameters:
+    - metrics: Dictionary with cpu_max, memory_max, network metrics, etc.
+
+    Returns:
+    - Formatted string describing the metrics findings
+    """
+    if not metrics or metrics.get("status") != "success":
+        return ""
+
+    summary_parts = []
+
+    # CPU metrics
+    cpu = metrics.get("cpu_max")
+    if cpu is not None:
+        if cpu > 80:
+            summary_parts.append(f"HIGH CPU: {cpu}% (Critical)")
+        elif cpu > 60:
+            summary_parts.append(f"Elevated CPU: {cpu}%")
+        else:
+            summary_parts.append(f"CPU: {cpu}%")
+
+    # Memory metrics (convert bytes to GB if available)
+    memory = metrics.get("memory_max")
+    if memory is not None:
+        memory_gb = memory / (1024**3)  # Convert bytes to GB
+        if memory_gb > 8:
+            summary_parts.append(f"HIGH Memory: {memory_gb:.2f}GB")
+        else:
+            summary_parts.append(f"Memory: {memory_gb:.2f}GB")
+
+    # Network metrics
+    network_in = metrics.get("network_in_max")
+    if network_in is not None and network_in > 0:
+        network_in_gb = network_in / (1024**3)
+        summary_parts.append(f"Network In: {network_in_gb:.2f}GB")
+
+    network_out = metrics.get("network_out_max")
+    if network_out is not None and network_out > 0:
+        network_out_gb = network_out / (1024**3)
+        summary_parts.append(f"Network Out: {network_out_gb:.2f}GB")
+
+    if summary_parts:
+        return "Azure Monitor metrics: " + " | ".join(summary_parts)
+    return ""
+
+
+def extract_vm_name(application_name: str, metrics: Dict[str, Any] = None) -> str:
+    """
+    Extract or derive VM name from application name and metrics.
+
+    Parameters:
+    - application_name: Application name from monitoring data
+    - metrics: Metrics dictionary (may contain vm_name)
+
+    Returns:
+    - Best guess at VM name for the Resolution Agent
+    """
+    # If metrics contain vm_name, use it
+    if metrics and metrics.get("vm_name"):
+        return metrics.get("vm_name")
+
+    # Use application name as VM name (assuming they follow similar naming)
+    if application_name and application_name != "Unknown":
+        return application_name
+
+    # Fallback
+    return "VirtualMachine"
+
+
 def _validate_env() -> tuple[str, str]:
     bot_token = os.getenv(SLACK_TOKEN_ENV)
     channel = os.getenv(SLACK_CHANNEL_ENV)
@@ -834,6 +907,16 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
 
         logger.info(f"Successfully processed incident for {application_name}")
 
+        # Extract metrics and VM name for downstream agents
+        metrics = full_ticket.get("metrics", {})
+        vm_name = extract_vm_name(application_name, metrics)
+        metrics_summary = format_metrics_summary(metrics)
+
+        # Enhance description with metrics information for Resolution Agent
+        enhanced_description = short_description
+        if metrics_summary:
+            enhanced_description = f"{short_description}\n\n{metrics_summary}"
+
         # Return the result as output (no handoff to resolution agent)
         return {
             "status": "success",
@@ -841,8 +924,10 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
             "incident_id": full_ticket.get("id"),
             "title": full_ticket.get("title"),
             "application_name": application_name,
+            "vm_name": vm_name,
             "severity": severity,
-            "description": short_description,
+            "description": enhanced_description,
+            "short_description": short_description,
             "detection_time": detection_time,
             "slack_delivery": {
                 "status": full_ticket.get("slack_delivery_status"),
@@ -850,7 +935,7 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
                 "message_timestamp": full_ticket.get("slack_ts"),
                 "error": full_ticket.get("slack_error")
             },
-            "metrics": full_ticket.get("metrics", {}),
+            "metrics": metrics,
             "correlation": full_ticket.get("correlation", {}),
             "monitoring_source": full_ticket.get("monitoring_source", {}),
             "full_ticket": full_ticket
