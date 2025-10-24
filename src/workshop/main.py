@@ -88,6 +88,44 @@ async def get_logs_from_azure_with_auth(
         raise
 
 
+def transform_monitoring_to_incident_format(monitoring_output: dict) -> dict:
+    """
+    Transform monitoring agent output to the format expected by incident detection agent.
+
+    Monitoring output format:
+    {
+        "status": "abnormalities_detected",
+        "application_name": "AppName",
+        "abnormal_lines": [...],
+        "analysis_summary": "...",
+        "timestamp": "..."
+    }
+
+    Incident detection expected format:
+    {
+        "status": "abnormality_detected",
+        "title": "...",
+        "short_description": "...",
+        "detection_time": "...",
+        "application_name": "...",
+        "related_log_lines": [...],
+        "timestamp_detected": "..."
+    }
+    """
+    if monitoring_output.get("status") != "abnormalities_detected":
+        return monitoring_output  # Return as-is if not abnormalities
+
+    return {
+        "status": "abnormality_detected",
+        "title": f"Performance Issue Detected in {monitoring_output.get('application_name', 'Unknown')}",
+        "short_description": monitoring_output.get("analysis_summary", "Abnormalities detected in application logs"),
+        "detection_time": monitoring_output.get("timestamp", ""),
+        "application_name": monitoring_output.get("application_name", "Unknown"),
+        "related_log_lines": monitoring_output.get("abnormal_lines", []),
+        "timestamp_detected": monitoring_output.get("timestamp", "")
+    }
+
+
 async def main() -> None:
     """Integrated multi-agent workflow: Monitoring → Incident Detection → Resolution.
 
@@ -122,59 +160,49 @@ async def main() -> None:
                 container_name = os.getenv("CONTAINER_NAME", "logs")
                 blob_name = os.getenv("BLOB_NAME", "AvailabilityLogs.log")
 
+                # Require storage account configuration
+                if not storage_account_name:
+                    raise EnvironmentError(
+                        f"STORAGE_ACCOUNT_NAME environment variable is not set.\n"
+                        f"Please configure your Azure Storage account:\n"
+                        f"  export STORAGE_ACCOUNT_NAME=\"your-storage-account\"\n"
+                        f"  export CONTAINER_NAME=\"logs\"  (default: logs)\n"
+                        f"  export BLOB_NAME=\"AvailabilityLogs.log\"  (default: AvailabilityLogs.log)"
+                    )
+
                 # Create monitoring agent
                 monitor_agent, monitor_thread = await create_monitor_agent()
 
                 try:
-                    log_content = None
+                    # Retrieve logs from Azure Storage using existing session
+                    print(f"{tc.CYAN}Retrieving logs from Azure Storage ({storage_account_name})...{tc.RESET}\n")
+                    log_content = await get_logs_from_azure_with_auth(
+                        storage_account_name=storage_account_name,
+                        container_name=container_name,
+                        blob_name=blob_name
+                    )
 
-                    if storage_account_name:
-                        # Attempt to retrieve logs from Azure Storage using existing session
-                        try:
-                            print(f"{tc.CYAN}Retrieving logs from Azure Storage ({storage_account_name})...{tc.RESET}\n")
-                            log_content = await get_logs_from_azure_with_auth(
-                                storage_account_name=storage_account_name,
-                                container_name=container_name,
-                                blob_name=blob_name
-                            )
-                        except Exception as e:
-                            print(f"{tc.YELLOW}Could not retrieve logs: {e}{tc.RESET}")
-                            print(f"{tc.YELLOW}Using sample data instead.{tc.RESET}\n")
-                            log_content = None
+                    # Analyze logs for abnormalities
+                    print(f"{tc.CYAN}Analyzing logs for abnormalities...{tc.RESET}\n")
+                    analysis_result = await check_for_abnormalities(
+                        log_content=log_content,
+                        agent_id=monitor_agent.id,
+                        thread_id=monitor_thread.id
+                    )
 
-                    if log_content:
-                        # Analyze real logs for abnormalities
-                        print(f"{tc.CYAN}Analyzing logs for abnormalities...{tc.RESET}\n")
-                        analysis_result = await check_for_abnormalities(
-                            log_content=log_content,
-                            agent_id=monitor_agent.id,
-                            thread_id=monitor_thread.id
-                        )
+                    # Collect and format output
+                    monitoring_output = collect_abnormalities_output(analysis_result)
 
-                        # Collect and format output
-                        monitoring_output = collect_abnormalities_output(analysis_result)
-
-                    else:
-                        print(f"{tc.YELLOW}Using sample data for demonstration.{tc.RESET}")
-                        print(f"{tc.YELLOW}To use real data, set STORAGE_ACCOUNT_NAME environment variable.{tc.RESET}\n")
-                        # Use sample monitoring output for demonstration
-                        monitoring_output = {
-                            "status": "abnormalities_detected",
-                            "application_name": "WebShop-Service",
-                            "abnormal_lines": [
-                                "2025-10-24T10:15:00 - Response time: 1250ms",
-                                "2025-10-24T10:20:00 - Response time: 1450ms",
-                                "2025-10-24T10:25:00 - Response time: 1680ms"
-                            ],
-                            "analysis_summary": "Gradually increasing response times detected",
-                            "timestamp": "2025-10-24T10:25:00"
-                        }
+                    # Transform to incident detection format if abnormalities detected
+                    if monitoring_output.get("status") == "abnormalities_detected":
+                        monitoring_output = transform_monitoring_to_incident_format(monitoring_output)
 
                     print(f"{tc.CYAN}Monitoring Agent Output:{tc.RESET}")
                     print(f"  Status: {monitoring_output.get('status')}")
-                    if monitoring_output.get('status') == 'abnormalities_detected':
+                    if monitoring_output.get('status') == 'abnormality_detected':
+                        print(f"  Title: {monitoring_output.get('title')}")
                         print(f"  Application: {monitoring_output.get('application_name')}")
-                        print(f"  Summary: {monitoring_output.get('analysis_summary')}\n")
+                        print(f"  Description: {monitoring_output.get('short_description')}\n")
                     else:
                         print(f"  Message: {monitoring_output.get('message')}\n")
 
@@ -197,7 +225,7 @@ async def main() -> None:
         # STEP 2: INCIDENT DETECTION AGENT - Only run if abnormalities detected
         # ============================================================================
         if (HAS_INCIDENT_DETECTION_AGENT and monitoring_output
-            and monitoring_output.get("status") == "abnormalities_detected"):
+            and monitoring_output.get("status") == "abnormality_detected"):
 
             print(f"{tc.GREEN}{'='*80}{tc.RESET}")
             print(f"{tc.GREEN}STEP 2: INCIDENT DETECTION AGENT - Processing abnormalities{tc.RESET}")
@@ -229,7 +257,7 @@ async def main() -> None:
                 print(f"{tc.RED}Error in Incident Detection Agent: {e}{tc.RESET}\n")
                 incident_result = {"status": "error", "message": str(e)}
 
-        elif monitoring_output and monitoring_output.get("status") != "abnormalities_detected":
+        elif monitoring_output and monitoring_output.get("status") != "abnormality_detected":
             print(f"{tc.YELLOW}{'='*80}{tc.RESET}")
             print(f"{tc.YELLOW}No abnormalities detected. Skipping incident detection and resolution.{tc.RESET}")
             print(f"{tc.YELLOW}{'='*80}{tc.RESET}\n")
