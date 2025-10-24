@@ -18,7 +18,7 @@ except Exception:
     SLACK_AVAILABLE = False
 
 try:
-    from azure.identity import ChainedTokenCredential, EnvironmentCredential, InteractiveBrowserCredential
+    from azure.identity import DefaultAzureCredential
     import httpx
     AZURE_MONITOR_AVAILABLE = True
 except Exception as e:
@@ -54,15 +54,26 @@ def _validate_env() -> tuple[str, str]:
 
 
 def _get_azure_credential():
-    """Get Azure credential using ChainedTokenCredential with multiple fallback methods."""
+    """
+    Get Azure credential using DefaultAzureCredential.
+
+    This automatically handles authentication in the following order:
+    1. Environment variables (AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID)
+    2. Managed identities (for Azure services)
+    3. Shared token cache (from az login, VS Code, etc.)
+    4. Visual Studio Code authentication
+    5. Azure CLI (az login session)
+    6. Interactive browser login
+
+    This method picks up your 'az login' session automatically.
+    """
     try:
-        credential = ChainedTokenCredential(
-            EnvironmentCredential(),
-            InteractiveBrowserCredential(),
-        )
+        credential = DefaultAzureCredential()
+        logger.debug("Successfully created DefaultAzureCredential")
         return credential
     except Exception as e:
-        logger.warning(f"Failed to create Azure credential: {e}")
+        logger.error(f"Failed to create Azure credential: {e}")
+        logger.error("Ensure you are authenticated with Azure. Run: az login")
         return None
 
 
