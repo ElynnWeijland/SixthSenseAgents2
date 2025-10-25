@@ -23,7 +23,7 @@ from sales_data import SalesData
 from terminal_colors import TerminalColors as tc
 from utilities import Utilities
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 load_dotenv()

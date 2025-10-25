@@ -236,22 +236,18 @@ async def fetch_azure_monitor_metrics(
         return metrics
 
     try:
-        # Parse detection time - no fallback to current time
-        if not detection_time:
-            logger.error("No detection_time provided for metrics query")
-            metrics["status"] = "detection_time_missing"
-            return metrics
+        # Note: Azure Monitor metrics are only available for recent data (typically last 30 days).
+        # Even though we have a detection_time from logs (which could be old), we query metrics
+        # around CURRENT TIME because that's when metric data is available.
+        # The detection_time is used for the incident ticket, but metrics are current system state.
 
-        try:
-            detection_dt = datetime.fromisoformat(detection_time.replace('Z', '+00:00'))
-        except Exception as e:
-            logger.error(f"Failed to parse detection_time '{detection_time}': {e}")
-            metrics["status"] = "detection_time_parse_error"
-            return metrics
+        logger.info(f"Detection time from logs: {detection_time}")
+        logger.info(f"Note: Metrics will be queried around current time (not log detection time)")
 
-        # Calculate time range
-        start_time = detection_dt - timedelta(minutes=lookback_minutes)
-        end_time = detection_dt + timedelta(minutes=lookahead_minutes)
+        # Calculate time range using CURRENT TIME, not detection_time
+        # This ensures we get available metric data from Azure Monitor
+        end_time = datetime.now(timezone.utc)
+        start_time = end_time - timedelta(minutes=lookback_minutes)
 
         logger.info(f"Querying Azure Monitor for VM '{vm_name}'")
         logger.info(f"Time range: {start_time} to {end_time}")
@@ -312,6 +308,7 @@ async def fetch_azure_monitor_metrics(
             }
 
             # Query parameters for REST API
+            # API version 2018-01-01 works and properly returns aggregated values
             params = {
                 "api-version": "2018-01-01",
                 "timespan": timespan_str,
@@ -320,9 +317,6 @@ async def fetch_azure_monitor_metrics(
                 "metricnames": ",".join(metrics_to_query.keys()),  # Join all metric names
             }
 
-            logger.info(f"API URL: {api_url}")
-            logger.info(f"API params: {params}")
-            logger.info(f"Requesting metrics: {list(metrics_to_query.keys())}")
 
             # Make REST API call
             async with httpx.AsyncClient() as client:
@@ -332,6 +326,7 @@ async def fetch_azure_monitor_metrics(
 
                 if response.status_code == 200:
                     data = response.json()
+
 
                     if "value" in data and data["value"]:
                         logger.info(f"Got {len(data['value'])} metrics from Azure Monitor")
@@ -348,15 +343,27 @@ async def fetch_azure_monitor_metrics(
                                 for ts in timeseries:
                                     data_points = ts.get("data", [])
                                     if data_points:
-                                        logger.debug(f"  Timeseries for {metric_name}: {len(data_points)} data points")
-                                        logger.debug(f"  Data points: {data_points}")
+                                        logger.info(f"  Timeseries for {metric_name}: {len(data_points)} data points")
+                                        logger.info(f"  Data points structure: {data_points[0] if data_points else 'empty'}")
 
                                         # Find maximum value
                                         max_val = None
-                                        for dp in data_points:
+
+
+                                        for i, dp in enumerate(data_points):
+                                            # Try both "maximum" and other possible field names
                                             if "maximum" in dp and dp["maximum"] is not None:
                                                 if max_val is None or dp["maximum"] > max_val:
                                                     max_val = dp["maximum"]
+                                            elif "total" in dp and dp["total"] is not None:
+                                                # Some metrics use "total" instead of "maximum"
+                                                if max_val is None or dp["total"] > max_val:
+                                                    max_val = dp["total"]
+                                            elif "average" in dp and dp["average"] is not None:
+                                                # Some metrics use "average"
+                                                if max_val is None or dp["average"] > max_val:
+                                                    max_val = dp["average"]
+
 
                                         # Store metric by name
                                         if max_val is not None:
@@ -437,12 +444,19 @@ def _parse_alert(alert_text: str) -> Dict[str, Optional[str]]:
     if region_match:
         region = region_match.group(0)
 
-    time_match = re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", alert_text)
+    # Match ISO 8601 timestamps with either Z suffix or timezone offset (±HH:MM)
+    # Pattern: YYYY-MM-DDTHH:MM:SS followed by Z or ±HH:MM
+    time_match = re.search(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})", alert_text)
+
     if time_match:
         ts = time_match.group(0)
+        logger.info(f"_parse_alert: Successfully extracted timestamp: {ts}")
     else:
-        # fallback: current time in CET/CEST ISO
+        # No ISO 8601 match found - log the full text for debugging and fallback to current time
+        logger.warning(f"_parse_alert: Could not extract ISO 8601 timestamp from alert_text")
+        logger.warning(f"_parse_alert: Full alert_text:\n{alert_text}")
         ts = datetime.now(CET_ZONE).isoformat()
+        logger.warning(f"_parse_alert: Using fallback current time: {ts}")
 
     sev_match = re.search(r"\b(critical|high|medium|low)\b", alert_text, re.IGNORECASE)
     if sev_match:
@@ -476,7 +490,8 @@ async def _gather_azure_context(parsed: Dict[str, Optional[str]]) -> Dict[str, A
 async def fetch_azure_metrics(
     parsed: Dict[str, Optional[str]],
     lookback_seconds: int = 300,
-    vm_name: str = "VirtualMachine"
+    vm_name: str = "VirtualMachine",
+    detection_time: str = None
 ) -> Dict[str, Any]:
     """
     Fetch metrics from Azure Monitor for a VM.
@@ -485,6 +500,7 @@ async def fetch_azure_metrics(
     - parsed: Dictionary with service/region info from alert parsing
     - lookback_seconds: Fallback for time calculation (converted to minutes)
     - vm_name: Name of the VM to query metrics for (default: "VirtualMachine")
+    - detection_time: Optional explicit detection time (preferred over regex/parsing)
 
     Returns:
     - Dictionary with metrics data (cpu_max, memory_max, network_in_max, etc.)
@@ -494,35 +510,36 @@ async def fetch_azure_metrics(
 
         logger.info(f"Fetching Azure Monitor metrics for VM: {vm_name}")
 
-        # Extract detection time from related_log_lines if available
-        detection_time = None
-        related_log_lines = parsed.get("related_log_lines", [])
-
-        if related_log_lines and isinstance(related_log_lines, list):
-            try:
-                # Log lines start with timestamp, e.g., "2025-10-21T18:46:00+02:00 app=..."
-                # Extract all timestamps and use the latest one
-                timestamps = []
-                for line in related_log_lines:
-                    if isinstance(line, str) and line.strip():
-                        # First token before space is the timestamp
-                        parts = line.split()
-                        if parts:
-                            ts = parts[0]
-                            timestamps.append(ts)
-
-                if timestamps:
-                    # Use the latest timestamp
-                    detection_time = timestamps[-1]
-                    logger.info(f"Extracted detection_time from log lines: {detection_time}")
-            except Exception as e:
-                logger.debug(f"Could not extract timestamp from log lines: {e}")
-
+        # Use provided detection_time if available, otherwise try to extract from log lines or parsed data
         if not detection_time:
-            logger.warning("No detection_time from log lines, using parsed timestamp")
-            detection_time = parsed.get("timestamp")
+            # Try to extract detection time from related_log_lines if available
+            related_log_lines = parsed.get("related_log_lines", [])
 
-        logger.info(f"Fetching metrics for timespan around: {detection_time}")
+            if related_log_lines and isinstance(related_log_lines, list):
+                try:
+                    # Log lines start with timestamp, e.g., "2025-10-21T18:46:00+02:00 app=..."
+                    # Extract all timestamps and use the latest one
+                    timestamps = []
+                    for line in related_log_lines:
+                        if isinstance(line, str) and line.strip():
+                            # First token before space is the timestamp
+                            parts = line.split()
+                            if parts:
+                                ts = parts[0]
+                                timestamps.append(ts)
+
+                    if timestamps:
+                        # Use the latest timestamp
+                        detection_time = timestamps[-1]
+                        logger.info(f"Extracted detection_time from log lines: {detection_time}")
+                except Exception as e:
+                    logger.debug(f"Could not extract timestamp from log lines: {e}")
+
+            if not detection_time:
+                logger.warning("No detection_time from log lines, using parsed timestamp")
+                detection_time = parsed.get("timestamp")
+
+        logger.info(f"Using detection_time for metrics: {detection_time}")
 
         # Call the real Azure Monitor metrics fetcher
         metrics = await fetch_azure_monitor_metrics(
@@ -661,12 +678,22 @@ async def send_to_resolution_agent(ticket: Dict[str, Any], correlation: Dict[str
     return result
 
 
-def create_incident_ticket(alert_text: str) -> dict:
+def create_incident_ticket(alert_text: str, detection_time: str = None) -> dict:
     """
     Pure ticket creation from alert text. Performs lightweight triage and returns ticket dict.
     No external network calls are made here.
+
+    Parameters:
+    - alert_text: Alert text to parse
+    - detection_time: Optional explicit detection time (preferred over regex extraction)
     """
     parsed = _parse_alert(alert_text)
+
+    # Override timestamp with provided detection_time if available
+    if detection_time:
+        parsed["timestamp"] = detection_time
+        logger.info(f"create_incident_ticket: Using provided detection_time: {detection_time}")
+
     incident_id = str(uuid.uuid4())
     created_at = datetime.now(CET_ZONE).isoformat()
 
@@ -794,13 +821,19 @@ async def async_send_to_slack(
     return result
 
 
-async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "") -> dict:
+async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "", detection_time: str = None) -> dict:
     """
     Create a ticket (triage + enrichment + correlation) and post it to Slack.
     Then hand the incident to the resolution agent.
     Returns the ticket enriched with Slack delivery metadata, Azure context and resolution handoff result.
+
+    Parameters:
+    - alert_text: The alert text to process
+    - severity: Severity level
+    - affected_system: Affected system name
+    - detection_time: Optional explicit detection time from the incident
     """
-    ticket = create_incident_ticket(alert_text)
+    ticket = create_incident_ticket(alert_text, detection_time=detection_time)
 
     # 2) fetch data from azure monitor (use mapping to get correct VM name)
     try:
@@ -817,7 +850,11 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
                 logger.warning(f"Application '{app_name}' not in mapping, using as VM name")
 
         logger.info(f"Fetching metrics for VM: {vm_name}")
-        metrics = await fetch_azure_metrics(ticket.get("triage", {}), vm_name=vm_name)
+        metrics = await fetch_azure_metrics(
+            ticket.get("triage", {}),
+            vm_name=vm_name,
+            detection_time=detection_time
+        )
         logger.info(f"Metrics fetch result - status: {metrics.get('status')}, cpu_max: {metrics.get('cpu_max')}")
         ticket["metrics"] = metrics
     except Exception as e:
@@ -943,11 +980,12 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
     related_log_lines = data.get("related_log_lines", [])
 
     logger.info(f"Processing incident from monitoring: {application_name} - {title}")
-    logger.debug(f"Detection time: {detection_time}")
+    logger.info(f"DEBUG process_monitoring_incident: detection_time = {detection_time}")
     logger.debug(f"Related log lines: {len(related_log_lines)} lines")
 
     # Construct alert text from monitoring data
     alert_text = f"{title}\n{short_description}\nDetection Time: {detection_time}\nApplication: {application_name}"
+    logger.info(f"DEBUG process_monitoring_incident: alert_text Detection Time line = {[line for line in alert_text.split(chr(10)) if 'Detection Time:' in line]}")
     if related_log_lines:
         alert_text += f"\n\nRelated Log Lines:\n" + "\n".join(related_log_lines)
 
@@ -968,7 +1006,8 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
         full_ticket = await raise_incident_in_slack(
             alert_text=alert_text,
             severity=severity,
-            affected_system=application_name
+            affected_system=application_name,
+            detection_time=detection_time
         )
 
         # Add monitoring context to ticket
@@ -992,6 +1031,7 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
             enhanced_description = f"{short_description}\n\n{metrics_summary}"
 
         # Return the result as output (no handoff to resolution agent)
+        logger.info(f"DEBUG returning from process_monitoring_incident: detection_time = {detection_time}")
         return {
             "status": "success",
             "ticket_id": ticket_id,

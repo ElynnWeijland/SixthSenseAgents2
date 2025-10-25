@@ -192,22 +192,53 @@ def collect_abnormalities_output(analysis_result: dict) -> dict:
             'abnormal_lines': []
         }
 
-    # Extract detection time from the first abnormal line
-    abnormal_lines = analysis_result.get('abnormal_lines', [])
-    detection_time = None
-    if abnormal_lines and isinstance(abnormal_lines, list):
-        for line in abnormal_lines:
-            if isinstance(line, str) and line.strip():
-                # Extract timestamp from beginning of line (ISO 8601 format)
-                parts = line.split()
-                if parts:
-                    detection_time = parts[0]
-                    break
+    logger.info(f"collect_abnormalities_output: analysis_result keys = {list(analysis_result.keys())}")
 
-    # Fallback to current time only if no timestamp found in abnormal lines
+    # Always extract abnormal_lines first (used in return statement)
+    abnormal_lines = analysis_result.get('abnormal_lines') or analysis_result.get('related_log_lines', [])
+
+    # FIRST: Try to parse detection_time from the JSON in the 'analysis' field
+    detection_time = None
+    analysis_str = analysis_result.get('analysis', '')
+
+    if analysis_str:
+        try:
+            # The analysis field contains a JSON string with detection_time inside
+            import json as json_module
+            analysis_json = json_module.loads(analysis_str)
+            detection_time = analysis_json.get('detection_time')
+            if detection_time:
+                logger.info(f"collect_abnormalities_output: Parsed detection_time from JSON analysis: {detection_time}")
+        except Exception as e:
+            logger.debug(f"collect_abnormalities_output: Could not parse JSON from analysis: {e}")
+
+    # SECOND ATTEMPT: Try to use detection_time directly from analysis_result
     if not detection_time:
-        logger.warning("No detection time found in abnormal lines, using current time")
-        detection_time = datetime.now().isoformat()
+        detection_time = analysis_result.get('detection_time')
+        if detection_time:
+            logger.info(f"collect_abnormalities_output: Using detection_time from analysis_result: {detection_time}")
+
+    if not detection_time:
+        # FALLBACK: Extract detection time from the first abnormal line
+
+        logger.info(f"collect_abnormalities_output: abnormal_lines count = {len(abnormal_lines) if abnormal_lines else 0}")
+
+        if abnormal_lines and isinstance(abnormal_lines, list):
+            for i, line in enumerate(abnormal_lines):
+                logger.debug(f"  Line {i}: {str(line)[:100]}")
+                if isinstance(line, str) and line.strip():
+                    # Extract timestamp from beginning of line (ISO 8601 format)
+                    parts = line.split()
+                    if parts:
+                        detection_time = parts[0]
+                        logger.info(f"collect_abnormalities_output: Extracted detection_time from line {i}: {detection_time}")
+                        break
+
+        # LAST RESORT: Fallback to current time only if no timestamp found anywhere
+        if not detection_time:
+            logger.error("collect_abnormalities_output: No detection time found in abnormal lines, using current time")
+            detection_time = datetime.now().isoformat()
+            logger.error(f"collect_abnormalities_output: Using fallback current time: {detection_time}")
 
     return {
         'status': 'abnormalities_detected',

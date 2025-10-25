@@ -115,14 +115,17 @@ def transform_monitoring_to_incident_format(monitoring_output: dict) -> dict:
     if monitoring_output.get("status") != "abnormalities_detected":
         return monitoring_output  # Return as-is if not abnormalities
 
+    # Extract detection_time - use timestamp_detected which has the actual log timestamp
+    detection_time = monitoring_output.get("timestamp_detected") or monitoring_output.get("detection_time") or monitoring_output.get("timestamp") or ""
+
     return {
         "status": "abnormality_detected",
         "title": f"Performance Issue Detected in {monitoring_output.get('application_name', 'Unknown')}",
         "short_description": monitoring_output.get("analysis_summary", "Abnormalities detected in application logs"),
-        "detection_time": monitoring_output.get("timestamp", ""),
+        "detection_time": detection_time,
         "application_name": monitoring_output.get("application_name", "Unknown"),
-        "related_log_lines": monitoring_output.get("abnormal_lines", []),
-        "timestamp_detected": monitoring_output.get("timestamp", "")
+        "related_log_lines": monitoring_output.get("related_log_lines", []) or monitoring_output.get("abnormal_lines", []),
+        "timestamp_detected": monitoring_output.get("timestamp_detected", "")
     }
 
 
@@ -236,8 +239,11 @@ async def main() -> None:
             try:
                 print(f"{tc.CYAN}Processing monitoring data as incident...{tc.RESET}\n")
 
-                # Process the monitoring output through incident detection
-                incident_result = await process_monitoring_incident(monitoring_output)
+                # Transform monitoring output to incident detection expected format
+                transformed_data = transform_monitoring_to_incident_format(monitoring_output)
+
+                # Process the transformed monitoring data through incident detection
+                incident_result = await process_monitoring_incident(transformed_data)
 
                 print(f"{tc.CYAN}Incident Detection Output:{tc.RESET}")
                 print(f"  Status: {incident_result.get('status')}")
@@ -258,9 +264,14 @@ async def main() -> None:
                             print(f"  Azure Metrics:")
                             if metrics.get('cpu_max') is not None:
                                 print(f"    - CPU: {metrics.get('cpu_max')}%")
+                            else:
+                                print(f"    - CPU: No data (None)")
                             if metrics.get('memory_max') is not None:
                                 mem_gb = metrics.get('memory_max') / (1024**3)
                                 print(f"    - Memory: {mem_gb:.2f}GB")
+                            else:
+                                print(f"    - Memory: No data (None)")
+                            print(f"  Raw Metrics Data Points: {metrics.get('raw_data', [])}")
                         else:
                             # Show error details if metrics fetch failed
                             if metrics.get('error'):
