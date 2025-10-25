@@ -175,12 +175,44 @@ ENVIRONMENT=local
 
 ## Running the Workflow
 
+### Basic Execution
+
 ```bash
 cd src/workshop
 python3.10 main.py
 ```
 
 This executes the complete 5-step integrated workflow and outputs results for each stage.
+
+### Testing with Simulated CPU Issue
+
+To test the full incident detection and resolution workflow including VM reboot, you can simulate a high CPU load on the Azure VM:
+
+1. **Connect to the VirtualMachine in Azure** via SSH or RDP
+
+2. **Stress the CPU** (before running main.py):
+```bash
+stress -c 3
+```
+This command stresses 3 CPU cores. The stress will run until interrupted.
+- On Linux: Press `Ctrl+C` to stop the stress
+- Ensure `stress` is installed: `sudo apt-get install stress` (Ubuntu/Debian) or `yum install stress` (RHEL/CentOS)
+
+3. **Keep the stress running** while executing main.py:
+```bash
+cd src/workshop
+python3.10 main.py
+```
+
+4. **Expected Behavior**:
+   - Step 1 (Monitoring Agent) will detect log abnormalities
+   - Step 2 (Incident Detection Agent) will fetch Azure Monitor metrics showing HIGH CPU (>80%)
+   - Step 3 (Resolution Agent) will decide to "solve" and **automatically reboot the VM**
+   - Steps 4 & 5 will create incident reports and benefits analysis
+
+### Without CPU Stress
+
+If you run main.py without CPU stress, the workflow will proceed through all 5 steps, but the Resolution Agent will likely "escalate" instead of attempting to reboot, as the CPU won't be high enough to warrant automatic remediation.
 
 ## Agents
 
