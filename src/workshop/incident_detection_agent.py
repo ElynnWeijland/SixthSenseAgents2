@@ -1048,6 +1048,7 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
             "description": enhanced_description,
             "short_description": short_description,
             "detection_time": detection_time,
+            "slack_thread_ts": full_ticket.get("slack_ts"),  # Thread timestamp for replies
             "slack_delivery": {
                 "status": full_ticket.get("slack_delivery_status"),
                 "channel": full_ticket.get("slack_channel"),

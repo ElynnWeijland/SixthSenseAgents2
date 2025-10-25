@@ -150,6 +150,7 @@ async def main() -> None:
         incident_result = None
         resolution_result = None
         ticket_id = None
+        slack_thread_ts = None  # Thread timestamp for Slack threading
 
         # ============================================================================
         # STEP 1: MONITORING AGENT - Analyze logs for abnormalities
@@ -279,11 +280,16 @@ async def main() -> None:
                             print(f"  Raw Metrics: {metrics}")
 
                     ticket_id = incident_result.get('ticket_id')
+                    slack_thread_ts = incident_result.get('slack_thread_ts')  # Capture thread timestamp
 
                     # Show Slack delivery status
                     if incident_result.get('slack_delivery'):
                         slack_status = incident_result['slack_delivery'].get('status')
-                        print(f"  Slack Delivery: {slack_status}\n")
+                        print(f"  Slack Delivery: {slack_status}")
+                        if slack_thread_ts:
+                            print(f"  Slack Thread ID: {slack_thread_ts}\n")
+                        else:
+                            print()
                 else:
                     print(f"  Message: {incident_result.get('message')}\n")
 
@@ -389,6 +395,15 @@ async def main() -> None:
                 report_agent, report_thread = await create_report_agent()
 
                 try:
+                    # Determine if resolution should be broadcast to channel
+                    # Broadcast if: escalated, critical severity, or resolution failed
+                    should_broadcast = (
+                        "escalate" in resolution_result.lower() or
+                        severity == "Critical" or
+                        "failed" in resolution_result.lower() or
+                        "error" in resolution_result.lower()
+                    )
+
                     # Construct the ticket creation request with the unified ticket ID
                     ticket_query = f"""
                     Create a ticket for the following incident with Ticket ID: {ticket_id}
@@ -400,13 +415,19 @@ async def main() -> None:
 
                     IMPORTANT: Use the provided Ticket ID: {ticket_id}
 
+                    SLACK THREADING INSTRUCTIONS:
+                    - Thread timestamp (thread_ts): {slack_thread_ts}
+                    - Post this message as a reply to the Slack thread using the thread_ts above
+                    - Broadcast to channel: {"YES - This requires attention!" if should_broadcast else "NO - Keep in thread only"}
+                    - Set reply_broadcast parameter to: {str(should_broadcast).lower()}
+
                     Please:
                     1. Use the provided ticket ID: {ticket_id}
                     2. Create a clear ticket title
                     3. Include the full resolution details
                     4. Extract and organize all relevant incident details
                     5. Format the ticket for Slack delivery with Ticket ID: {ticket_id}
-                    6. Send the ticket to Slack immediately
+                    6. Send the ticket to Slack immediately with threading parameters (thread_ts={slack_thread_ts}, reply_broadcast={str(should_broadcast).lower()})
                     """
 
                     ticket_result = await post_to_report_agent(
@@ -472,7 +493,13 @@ async def main() -> None:
                     IMPORTANT INSTRUCTIONS:
                     - Reference the Application as "{application_name}" (NOT "VM Name")
                     - Include the Ticket ID "{ticket_id}" in your Slack message so it's clear this benefits analysis is related to the ticket that was just sent.
-                    - After completing your analysis, send the results to the Slack incident channel.
+
+                    SLACK THREADING INSTRUCTIONS:
+                    - Thread timestamp (thread_ts): {slack_thread_ts}
+                    - Post this message as a reply to the Slack thread using the thread_ts above
+                    - DO NOT broadcast to channel - keep this informational message in the thread only
+
+                    - After completing your analysis, send the results to the Slack incident channel with thread_ts={slack_thread_ts}
                     """
 
                     benefits_result = await post_to_benefits_agent(

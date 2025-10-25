@@ -34,9 +34,11 @@ async def async_send_to_slack(
     incident_details: str,
     severity: str = "Medium",
     affected_system: str = "",
-    resolution: str = ""
+    resolution: str = "",
+    thread_ts: str = None,
+    reply_broadcast: bool = False
 ) -> str:
-    """Send a formatted ticket to Slack.
+    """Send a formatted ticket to Slack with optional threading support.
 
     Args:
         ticket_title: Title of the ticket
@@ -45,6 +47,8 @@ async def async_send_to_slack(
         severity: Severity level (Low, Medium, High, Critical)
         affected_system: Name of affected system/VM
         resolution: Resolution steps or status
+        thread_ts: Thread timestamp to reply to (for threading)
+        reply_broadcast: If True, also show reply in main channel
 
     Returns:
         JSON string with Slack delivery status
@@ -139,12 +143,24 @@ async def async_send_to_slack(
             ]
         })
 
-        # Send message to Slack
-        response = client.chat_postMessage(
-            channel=slack_channel,
-            blocks=blocks,
-            text=f"New Ticket: {ticket_title}"  # Fallback text for notifications
-        )
+        # Send message to Slack with threading support
+        message_params = {
+            "channel": slack_channel,
+            "blocks": blocks,
+            "text": f"New Ticket: {ticket_title}"  # Fallback text for notifications
+        }
+
+        # Add threading parameters if provided
+        if thread_ts:
+            message_params["thread_ts"] = thread_ts
+            logger.info(f"Posting to thread: {thread_ts}")
+
+            # Broadcast to channel if requested (hybrid approach)
+            if reply_broadcast:
+                message_params["reply_broadcast"] = True
+                logger.info("Broadcasting reply to main channel")
+
+        response = client.chat_postMessage(**message_params)
 
         result["delivery_status"] = "success"
         result["slack_message_ts"] = response["ts"]
