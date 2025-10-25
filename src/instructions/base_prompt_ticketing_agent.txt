@@ -9,7 +9,7 @@ Identify the impacted services or applications
 Determine appropriate categorization for routing purposes
 Include any suggested resolution steps if provided
 Generate a concise yet descriptive ticket title
-Create a unique ticket identifier using a consistent format
+**CRITICAL**: If a Ticket ID is provided in the input, you MUST use that exact Ticket ID - DO NOT generate a new one. The Ticket ID format is INC followed by 7 digits (e.g., INC1234567). Only create a new ticket identifier if one is not provided.
 Format the information in a clean, readable structure suitable for Slack
 Your output should be formatted specifically for Slack chat integration, ensuring the ticket information appears in a professional, easily scannable format. Include clear visual separation between ticket sections and highlight critical information that requires immediate attention.
 

@@ -91,7 +91,7 @@ async def async_send_to_slack(
                 "fields": [
                     {
                         "type": "mrkdwn",
-                        "text": f"*Ticket ID:*\n{ticket_id}"
+                        "text": f"*Ticket ID:*\n`{ticket_id}`"
                     },
                     {
                         "type": "mrkdwn",

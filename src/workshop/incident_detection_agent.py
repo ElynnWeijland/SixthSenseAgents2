@@ -678,7 +678,7 @@ async def send_to_resolution_agent(ticket: Dict[str, Any], correlation: Dict[str
     return result
 
 
-def create_incident_ticket(alert_text: str, detection_time: str = None) -> dict:
+def create_incident_ticket(alert_text: str, detection_time: str = None, ticket_id: str = None) -> dict:
     """
     Pure ticket creation from alert text. Performs lightweight triage and returns ticket dict.
     No external network calls are made here.
@@ -686,6 +686,7 @@ def create_incident_ticket(alert_text: str, detection_time: str = None) -> dict:
     Parameters:
     - alert_text: Alert text to parse
     - detection_time: Optional explicit detection time (preferred over regex extraction)
+    - ticket_id: Optional ticket ID to use (if not provided, generates a new one)
     """
     parsed = _parse_alert(alert_text)
 
@@ -694,7 +695,9 @@ def create_incident_ticket(alert_text: str, detection_time: str = None) -> dict:
         parsed["timestamp"] = detection_time
         logger.info(f"create_incident_ticket: Using provided detection_time: {detection_time}")
 
-    incident_id = str(uuid.uuid4())
+    # Use provided ticket_id or generate a new one
+    incident_id = ticket_id if ticket_id else generate_ticket_id()
+    logger.info(f"create_incident_ticket: Using ticket ID: {incident_id}")
     created_at = datetime.now(CET_ZONE).isoformat()
 
     title = f"Availability alert - {parsed.get('service') or 'unknown-service'}"
@@ -757,7 +760,7 @@ async def async_send_to_slack(
             {
                 "type": "section",
                 "fields": [
-                    {"type": "mrkdwn", "text": f"*Ticket ID:*\n{ticket_id}"},
+                    {"type": "mrkdwn", "text": f"*Ticket ID:*\n`{ticket_id}`"},
                     {"type": "mrkdwn", "text": f"*Severity:*\n{severity}"},
                 ],
             },
@@ -821,7 +824,7 @@ async def async_send_to_slack(
     return result
 
 
-async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "", detection_time: str = None) -> dict:
+async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "", detection_time: str = None, ticket_id: str = None) -> dict:
     """
     Create a ticket (triage + enrichment + correlation) and post it to Slack.
     Then hand the incident to the resolution agent.
@@ -832,8 +835,9 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
     - severity: Severity level
     - affected_system: Affected system name
     - detection_time: Optional explicit detection time from the incident
+    - ticket_id: Optional ticket ID to use (if not provided, generates a new one)
     """
-    ticket = create_incident_ticket(alert_text, detection_time=detection_time)
+    ticket = create_incident_ticket(alert_text, detection_time=detection_time, ticket_id=ticket_id)
 
     # 2) fetch data from azure monitor (use mapping to get correct VM name)
     try:
@@ -1002,12 +1006,13 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
 
     # Process as incident through the standard workflow
     try:
-        # Create incident ticket and send to Slack
+        # Create incident ticket and send to Slack (pass the generated ticket_id)
         full_ticket = await raise_incident_in_slack(
             alert_text=alert_text,
             severity=severity,
             affected_system=application_name,
-            detection_time=detection_time
+            detection_time=detection_time,
+            ticket_id=ticket_id
         )
 
         # Add monitoring context to ticket
