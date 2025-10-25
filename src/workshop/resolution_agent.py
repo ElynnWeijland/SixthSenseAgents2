@@ -216,12 +216,12 @@ async def post_message(thread_id: str, content: str, agent: object, thread: obje
             resource_group = AZURE_RESOURCE_GROUP_NAME
             subscription_id = AZURE_SUBSCRIPTION_ID
 
-            # crude parsing: look for patterns like 'vm_name=NAME' or 'vm NAME'
-            m = re.search(r"vm_name[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
+            # Parse VM name from incident input - look for patterns like 'VM Name: VirtualMachine' or 'vm_name=NAME'
+            m = re.search(r"VM\s+Name[:=\s]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
             if m:
                 vm_name = m.group(1)
             else:
-                m2 = re.search(r"vm[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
+                m2 = re.search(r"vm_name[:= ]+([A-Za-z0-9-]+)", user_input, re.IGNORECASE)
                 if m2:
                     vm_name = m2.group(1)
 
