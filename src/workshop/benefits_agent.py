@@ -84,9 +84,10 @@ async def async_send_benefits_to_slack(
     downtime_prevented_minutes: int = 30,
     additional_details: str = "",
     ticket_id: str = "",  # Link to the incident ticket
+    thread_ts: str = None,  # Thread timestamp for threading
     **kwargs  # Accept additional parameters for flexibility
 ) -> str:
-    """Send benefits analysis to Slack incident channel.
+    """Send benefits analysis to Slack incident channel with optional threading support.
 
     Args:
         incident_description: Description of the incident that was resolved
@@ -98,6 +99,7 @@ async def async_send_benefits_to_slack(
         downtime_prevented_minutes: Minutes of downtime prevented
         additional_details: Additional context or details
         ticket_id: Related incident ticket ID for cross-reference
+        thread_ts: Thread timestamp to reply to (for threading)
         **kwargs: Additional parameters (e.g., total_benefit, revenue_preserved, etc.)
 
     Returns:
@@ -243,12 +245,21 @@ async def async_send_benefits_to_slack(
             ]
         })
 
-        # Send message to Slack
-        response = client.chat_postMessage(
-            channel=slack_channel,
-            blocks=blocks,
-            text=f"Benefits Analysis: €{total_benefit_eur:,.2f} total benefit"
-        )
+        # Send message to Slack with threading support
+        message_params = {
+            "channel": slack_channel,
+            "blocks": blocks,
+            "text": f"Benefits Analysis: €{total_benefit_eur:,.2f} total benefit"
+        }
+
+        # Add threading parameters if provided (benefits should NOT broadcast)
+        if thread_ts:
+            message_params["thread_ts"] = thread_ts
+            logger.info(f"Posting benefits to thread: {thread_ts}")
+            # Note: Benefits messages are informational and should stay in thread only
+            # Do NOT set reply_broadcast=True here
+
+        response = client.chat_postMessage(**message_params)
 
         result["delivery_status"] = "success"
         result["slack_message_ts"] = response["ts"]
@@ -537,8 +548,11 @@ async def post_message(
                                 "output": result
                             })
                         elif tool_call.function.name == "async_send_benefits_to_slack":
+                            print(f"Executing async_send_benefits_to_slack tool call...")
                             args = json.loads(tool_call.function.arguments)
+                            print(f"Arguments: {args}")
                             result = await async_send_benefits_to_slack(**args)
+                            print(f"Result: {result}")
                             tool_outputs.append({
                                 "tool_call_id": tool_call.id,
                                 "output": result

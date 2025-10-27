@@ -36,8 +36,8 @@ Running locally
    - python -m pip install -r requirements.txt
 
 3. Export required Slack env vars:
-   - export SLACK_BOT_TOKEN="xoxb-...your-bot-token..."
-   - export SLACK_CHANNEL="#incidents"
+   - export SLACK_BOT_TOKEN="<your-slack-bot-token>"
+   - export SLACK_CHANNEL="<your-slack-channel>"
 
 4. Trigger the incident detection agent:
    - python3 src/workshop/main.py

@@ -678,7 +678,7 @@ async def send_to_resolution_agent(ticket: Dict[str, Any], correlation: Dict[str
     return result
 
 
-def create_incident_ticket(alert_text: str, detection_time: str = None, ticket_id: str = None) -> dict:
+def create_incident_ticket(alert_text: str, detection_time: str = None, ticket_id: str = None, application_name: str = None) -> dict:
     """
     Pure ticket creation from alert text. Performs lightweight triage and returns ticket dict.
     No external network calls are made here.
@@ -687,6 +687,7 @@ def create_incident_ticket(alert_text: str, detection_time: str = None, ticket_i
     - alert_text: Alert text to parse
     - detection_time: Optional explicit detection time (preferred over regex extraction)
     - ticket_id: Optional ticket ID to use (if not provided, generates a new one)
+    - application_name: Optional application name to use in title (preferred over regex extraction)
     """
     parsed = _parse_alert(alert_text)
 
@@ -700,7 +701,9 @@ def create_incident_ticket(alert_text: str, detection_time: str = None, ticket_i
     logger.info(f"create_incident_ticket: Using ticket ID: {incident_id}")
     created_at = datetime.now(CET_ZONE).isoformat()
 
-    title = f"Availability alert - {parsed.get('service') or 'unknown-service'}"
+    # Use provided application_name or fallback to parsed service
+    service_name = application_name or parsed.get('service') or 'unknown-service'
+    title = f"Availability alert - {service_name}"
     summary = alert_text.strip()
 
     ticket = {
@@ -722,7 +725,10 @@ async def async_send_to_slack(
     incident_details: str,
     severity: str = "Medium",
     affected_system: str = "",
-    resolution: str = ""
+    resolution: str = "",
+    detection_time: str = None,
+    short_description: str = None,
+    related_log_lines: list = None
 ) -> Dict[str, Any]:
     """
     Send a formatted ticket to Slack using Block Kit (if available).
@@ -755,6 +761,11 @@ async def async_send_to_slack(
     try:
         client = WebClient(token=slack_token)
 
+        # Debug logging
+        logger.info(f"DEBUG async_send_to_slack: related_log_lines type = {type(related_log_lines)}")
+        logger.info(f"DEBUG async_send_to_slack: related_log_lines count = {len(related_log_lines) if related_log_lines else 0}")
+        logger.info(f"DEBUG async_send_to_slack: related_log_lines value = {related_log_lines}")
+
         blocks = [
             {"type": "header", "text": {"type": "plain_text", "text": f"🎫 {ticket_title}", "emoji": True}},
             {
@@ -764,11 +775,98 @@ async def async_send_to_slack(
                     {"type": "mrkdwn", "text": f"*Severity:*\n{severity}"},
                 ],
             },
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Incident Details:*\n{incident_details}"}},
         ]
 
         if affected_system:
-            blocks.insert(2, {"type": "section", "fields": [{"type": "mrkdwn", "text": f"*Affected System:*\n{affected_system}"}]})
+            blocks.append({"type": "section", "fields": [{"type": "mrkdwn", "text": f"*Affected System:*\n{affected_system}"}]})
+
+        # Add description section if provided
+        if short_description:
+            # Enhance description with time window and impact information if available
+            enhanced_description = short_description
+
+            # Add time window information if we have related log lines with timestamps
+            if related_log_lines and len(related_log_lines) > 0:
+                try:
+                    # Extract timestamps from log lines to determine time window
+                    timestamps = []
+                    for line in related_log_lines:
+                        if isinstance(line, str) and line.strip():
+                            # First token before space is typically the timestamp
+                            parts = line.split()
+                            if parts and ('T' in parts[0] or ':' in parts[0]):
+                                timestamps.append(parts[0])
+
+                    if len(timestamps) >= 2:
+                        # Calculate time window from first to last log entry
+                        enhanced_description += f"\n\n📊 *Time Window:* {timestamps[0]} to {timestamps[-1]}"
+                except Exception as e:
+                    logger.debug(f"Could not extract time window from logs: {e}")
+
+            # Add impact information if mentioned in description
+            impact_indicators = []
+            desc_lower = short_description.lower()
+            if 'response time' in desc_lower or 'latency' in desc_lower:
+                impact_indicators.append("⚠️ *Impact:* Response time degradation detected")
+            if 'unavailable' in desc_lower or 'downtime' in desc_lower or 'outage' in desc_lower:
+                impact_indicators.append("🔴 *Impact:* Service unavailability detected")
+            if 'error' in desc_lower and 'rate' in desc_lower:
+                impact_indicators.append("⚠️ *Impact:* Increased error rate detected")
+
+            if impact_indicators:
+                enhanced_description += "\n\n" + "\n".join(impact_indicators)
+
+            blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*Description:*\n{enhanced_description}"}})
+
+        # Add detection time if provided
+        if detection_time:
+            # Add log source information if we can extract it from the logs
+            log_source_info = ""
+            if related_log_lines and len(related_log_lines) > 0:
+                try:
+                    # Try to extract log source/path from first log line
+                    first_line = related_log_lines[0] if isinstance(related_log_lines[0], str) else ""
+                    if 'app=' in first_line:
+                        app_match = first_line.split('app=')[1].split()[0]
+                        log_source_info = f"\n📂 *Log Source:* Application logs for `{app_match}`"
+                except:
+                    pass
+
+            detection_text = f"*Detection Time:*\n{detection_time}{log_source_info}"
+            blocks.append({"type": "section", "fields": [{"type": "mrkdwn", "text": detection_text}]})
+
+        # Add related log lines in a collapsible section if provided
+        if related_log_lines and len(related_log_lines) > 0:
+            # Extract key metrics from log lines if available (e.g., response times, error codes)
+            metrics_summary = []
+            response_times = []
+
+            for line in related_log_lines[:5]:
+                if isinstance(line, str):
+                    # Extract response times if present
+                    if 'response_time_ms=' in line:
+                        try:
+                            rt = line.split('response_time_ms=')[1].split()[0]
+                            response_times.append(int(rt))
+                        except:
+                            pass
+
+            # Build log section header with metrics if available
+            log_header = "*Related Log Lines"
+            if response_times:
+                min_rt = min(response_times)
+                max_rt = max(response_times)
+                log_header += f" (Response times: {min_rt}ms → {max_rt}ms)"
+            log_header += ":*"
+
+            log_text = "\n".join([f"• `{line}`" for line in related_log_lines[:5]])  # Limit to 5 lines
+            if len(related_log_lines) > 5:
+                log_text += f"\n\n_📝 Showing {min(5, len(related_log_lines))} of {len(related_log_lines)} related log entries_"
+
+            blocks.append({
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": f"{log_header}\n{log_text}"}
+            })
 
         blocks.append(
             {
@@ -824,7 +922,7 @@ async def async_send_to_slack(
     return result
 
 
-async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "", detection_time: str = None, ticket_id: str = None) -> dict:
+async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", affected_system: str = "", detection_time: str = None, ticket_id: str = None, short_description: str = None, related_log_lines: list = None) -> dict:
     """
     Create a ticket (triage + enrichment + correlation) and post it to Slack.
     Then hand the incident to the resolution agent.
@@ -836,8 +934,10 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
     - affected_system: Affected system name
     - detection_time: Optional explicit detection time from the incident
     - ticket_id: Optional ticket ID to use (if not provided, generates a new one)
+    - short_description: Optional short description for better Slack formatting
+    - related_log_lines: Optional list of related log lines for better Slack formatting
     """
-    ticket = create_incident_ticket(alert_text, detection_time=detection_time, ticket_id=ticket_id)
+    ticket = create_incident_ticket(alert_text, detection_time=detection_time, ticket_id=ticket_id, application_name=affected_system)
 
     # 2) fetch data from azure monitor (use mapping to get correct VM name)
     try:
@@ -881,6 +981,9 @@ async def raise_incident_in_slack(alert_text: str, severity: str = "Medium", aff
         severity=severity or ticket["triage"].get("severity", "Medium"),
         affected_system=affected_system or (ticket["triage"].get("service") or ""),
         resolution="",
+        detection_time=detection_time,
+        short_description=short_description,
+        related_log_lines=related_log_lines,
     )
 
     ticket["slack_delivery_status"] = slack_result.get("delivery_status")
@@ -985,7 +1088,28 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
 
     logger.info(f"Processing incident from monitoring: {application_name} - {title}")
     logger.info(f"DEBUG process_monitoring_incident: detection_time = {detection_time}")
+    logger.info(f"DEBUG process_monitoring_incident: short_description type = {type(short_description)}")
+    logger.info(f"DEBUG process_monitoring_incident: short_description value = {short_description}")
+    logger.info(f"DEBUG process_monitoring_incident: related_log_lines type = {type(related_log_lines)}")
+    logger.info(f"DEBUG process_monitoring_incident: related_log_lines count = {len(related_log_lines) if related_log_lines else 0}")
+    logger.info(f"DEBUG process_monitoring_incident: related_log_lines value = {related_log_lines}")
     logger.debug(f"Related log lines: {len(related_log_lines)} lines")
+
+    # Ensure short_description is a string, not a dict or JSON
+    if isinstance(short_description, dict):
+        logger.warning("short_description is a dict, extracting text field or converting to string")
+        short_description = short_description.get("short_description", str(short_description))
+    elif short_description and isinstance(short_description, str):
+        # Check if short_description contains JSON and extract just the text
+        try:
+            # Try to parse as JSON - if it parses, it's JSON that should be extracted
+            parsed = json.loads(short_description)
+            if isinstance(parsed, dict) and "short_description" in parsed:
+                logger.warning("short_description contains JSON, extracting nested short_description")
+                short_description = parsed.get("short_description", short_description)
+        except (json.JSONDecodeError, ValueError):
+            # Not JSON, use as-is
+            pass
 
     # Construct alert text from monitoring data
     alert_text = f"{title}\n{short_description}\nDetection Time: {detection_time}\nApplication: {application_name}"
@@ -1012,7 +1136,9 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
             severity=severity,
             affected_system=application_name,
             detection_time=detection_time,
-            ticket_id=ticket_id
+            ticket_id=ticket_id,
+            short_description=short_description,
+            related_log_lines=related_log_lines
         )
 
         # Add monitoring context to ticket
@@ -1048,6 +1174,7 @@ async def process_monitoring_incident(monitoring_json: Dict[str, Any] | str) -> 
             "description": enhanced_description,
             "short_description": short_description,
             "detection_time": detection_time,
+            "slack_thread_ts": full_ticket.get("slack_ts"),  # Thread timestamp for replies
             "slack_delivery": {
                 "status": full_ticket.get("slack_delivery_status"),
                 "channel": full_ticket.get("slack_channel"),
