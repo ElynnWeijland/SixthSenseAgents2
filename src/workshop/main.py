@@ -118,13 +118,38 @@ def transform_monitoring_to_incident_format(monitoring_output: dict) -> dict:
     # Extract detection_time - use timestamp_detected which has the actual log timestamp
     detection_time = monitoring_output.get("timestamp_detected") or monitoring_output.get("detection_time") or monitoring_output.get("timestamp") or ""
 
+    # Parse analysis_summary if it contains JSON
+    analysis_summary = monitoring_output.get("analysis_summary", "Abnormalities detected in application logs")
+    short_description = analysis_summary
+    title = f"Performance Issue Detected in {monitoring_output.get('application_name', 'Unknown')}"
+    related_log_lines = monitoring_output.get("related_log_lines", []) or monitoring_output.get("abnormal_lines", [])
+
+    # Try to parse JSON from analysis_summary if it looks like JSON
+    if analysis_summary and isinstance(analysis_summary, str) and analysis_summary.strip().startswith('{'):
+        try:
+            analysis_json = json.loads(analysis_summary)
+            # Extract fields from the JSON
+            if isinstance(analysis_json, dict):
+                short_description = analysis_json.get("short_description", analysis_summary)
+                title = analysis_json.get("title", title)
+                if not detection_time:
+                    detection_time = analysis_json.get("detection_time", detection_time)
+                # Extract related_log_lines from JSON if not already present
+                if not related_log_lines:
+                    related_log_lines = analysis_json.get("related_log_lines", [])
+                print(f"Parsed JSON from analysis_summary: title={title}, short_description={short_description}, related_log_lines count={len(related_log_lines)}")
+        except json.JSONDecodeError as e:
+            print(f"Warning: Could not parse JSON from analysis_summary: {e}")
+            # Use as-is if not valid JSON
+            pass
+
     return {
         "status": "abnormality_detected",
-        "title": f"Performance Issue Detected in {monitoring_output.get('application_name', 'Unknown')}",
-        "short_description": monitoring_output.get("analysis_summary", "Abnormalities detected in application logs"),
+        "title": title,
+        "short_description": short_description,
         "detection_time": detection_time,
         "application_name": monitoring_output.get("application_name", "Unknown"),
-        "related_log_lines": monitoring_output.get("related_log_lines", []) or monitoring_output.get("abnormal_lines", []),
+        "related_log_lines": related_log_lines,
         "timestamp_detected": monitoring_output.get("timestamp_detected", "")
     }
 

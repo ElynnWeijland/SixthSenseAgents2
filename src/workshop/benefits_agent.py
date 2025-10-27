@@ -548,8 +548,11 @@ async def post_message(
                                 "output": result
                             })
                         elif tool_call.function.name == "async_send_benefits_to_slack":
+                            print(f"Executing async_send_benefits_to_slack tool call...")
                             args = json.loads(tool_call.function.arguments)
+                            print(f"Arguments: {args}")
                             result = await async_send_benefits_to_slack(**args)
+                            print(f"Result: {result}")
                             tool_outputs.append({
                                 "tool_call_id": tool_call.id,
                                 "output": result
